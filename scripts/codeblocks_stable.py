@@ -6,46 +6,43 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from scripts.codeblocks_notices import (
-    DEFAULT_NOTICE_PATTERNS,
-    RUNTIME_NOTICE_PATTERNS,
-    collect_notice_inventory,
-    is_runtime_notice_pattern as _is_runtime_notice_pattern,
-    notice_category_from_name as _notice_category_from_name,
-    render_notice_inventory as _render_notice_inventory,
-)
-from scripts.codeblocks_profile import (
-    DEFAULT_PROFILE_OVERLAY_REPLACEMENTS,
-    build_managed_profile,
-    build_profile_overlay_contract,
-    case_insensitive_replace as _case_insensitive_replace,
-    materialize_profile_seed,
-    normalize_codeblocks_profile,
-    normalize_codesnippets_ini,
-    normalize_profile_bundle,
-    resolve_manifest_roots,
-    rewrite_windows_paths,
-    toolchain_python_relative_path as _toolchain_python_relative_path,
-    validate_profile_overlay_contract,
-)
-from scripts.codeblocks_shared import (
-    NoticeEntry,
-    as_windows_string as _as_windows_string,
-    ensure_str_list as _ensure_str_list,
-    expand_manifest_path as _expand_manifest_path,
-    load_json_document,
-    require_non_empty_string as _require_non_empty_string,
-    write_json_document,
-)
-from scripts.codeblocks_validation import (
-    load_manifest,
-    release_input_checks as _release_input_checks,
-    validate_bundled_toolchain as _validate_bundled_toolchain,
-    validate_manifest_literals as _validate_manifest_literals,
-    validate_payload_manifest,
-    validate_profile_rewrites as _validate_profile_rewrites,
-    validate_release_inputs,
-)
+from scripts import codeblocks_notices, codeblocks_profile, codeblocks_shared, codeblocks_validation
+
+DEFAULT_NOTICE_PATTERNS = codeblocks_notices.DEFAULT_NOTICE_PATTERNS
+RUNTIME_NOTICE_PATTERNS = codeblocks_notices.RUNTIME_NOTICE_PATTERNS
+collect_notice_inventory = codeblocks_notices.collect_notice_inventory
+_is_runtime_notice_pattern = codeblocks_notices.is_runtime_notice_pattern
+_notice_category_from_name = codeblocks_notices.notice_category_from_name
+_render_notice_inventory = codeblocks_notices.render_notice_inventory
+
+DEFAULT_PROFILE_OVERLAY_REPLACEMENTS = codeblocks_profile.DEFAULT_PROFILE_OVERLAY_REPLACEMENTS
+build_managed_profile = codeblocks_profile.build_managed_profile
+build_profile_overlay_contract = codeblocks_profile.build_profile_overlay_contract
+_case_insensitive_replace = codeblocks_profile.case_insensitive_replace
+materialize_profile_seed = codeblocks_profile.materialize_profile_seed
+normalize_codeblocks_profile = codeblocks_profile.normalize_codeblocks_profile
+normalize_codesnippets_ini = codeblocks_profile.normalize_codesnippets_ini
+normalize_profile_bundle = codeblocks_profile.normalize_profile_bundle
+resolve_manifest_roots = codeblocks_profile.resolve_manifest_roots
+rewrite_windows_paths = codeblocks_profile.rewrite_windows_paths
+_toolchain_python_relative_path = codeblocks_profile.toolchain_python_relative_path
+validate_profile_overlay_contract = codeblocks_profile.validate_profile_overlay_contract
+
+NoticeEntry = codeblocks_shared.NoticeEntry
+_as_windows_string = codeblocks_shared.as_windows_string
+_ensure_str_list = codeblocks_shared.ensure_str_list
+_expand_manifest_path = codeblocks_shared.expand_manifest_path
+load_json_document = codeblocks_shared.load_json_document
+_require_non_empty_string = codeblocks_shared.require_non_empty_string
+write_json_document = codeblocks_shared.write_json_document
+
+load_manifest = codeblocks_validation.load_manifest
+_release_input_checks = codeblocks_validation.release_input_checks
+_validate_bundled_toolchain = codeblocks_validation.validate_bundled_toolchain
+_validate_manifest_literals = codeblocks_validation.validate_manifest_literals
+validate_payload_manifest = codeblocks_validation.validate_payload_manifest
+_validate_profile_rewrites = codeblocks_validation.validate_profile_rewrites
+validate_release_inputs = codeblocks_validation.validate_release_inputs
 
 __all__ = [
     "DEFAULT_NOTICE_PATTERNS",
