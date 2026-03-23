@@ -2,6 +2,7 @@
 set -euo pipefail
 
 mkdir -p build
+rm -f .coverage
 
 if command -v python >/dev/null 2>&1; then
   PYTHON_CMD=(python)
@@ -17,6 +18,7 @@ fi
 "${PYTHON_CMD[@]}" -m coverage run --rcfile=.coveragerc -m unittest discover -s tests -p 'test_*.py' -v
 "${PYTHON_CMD[@]}" -m coverage report --rcfile=.coveragerc
 "${PYTHON_CMD[@]}" -m coverage xml --rcfile=.coveragerc -o build/coverage.xml
+"${PYTHON_CMD[@]}" -m scripts.quality.normalize_coverage_xml build/coverage.xml
 "${PYTHON_CMD[@]}" -m coverage json --rcfile=.coveragerc -o build/coverage.json
 "${PYTHON_CMD[@]}" -m coverage run -a --rcfile=.coveragerc -m scripts.quality.validate_release_inputs .
 "${PYTHON_CMD[@]}" -m coverage run -a --rcfile=.coveragerc -m scripts.codeblocks_stable validate-manifest manifests/codeblocks_stable_toolchain.json
