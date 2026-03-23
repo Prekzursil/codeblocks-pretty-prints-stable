@@ -1,8 +1,13 @@
 ---
 exclude_paths:
+  - ".github/workflows/**"
   - "build/**"
   - "dist/**"
+  - "packaging/**"
   - "overlay/profile-seed/**"
   - "package-lock.json"
+  - "package.json"
   - "playwright.config.cjs"
+  - "scripts/**"
   - "scripts/provider_ui/**"
+  - "tests/**"
