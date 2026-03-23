@@ -47,6 +47,41 @@ from scripts.codeblocks_validation import (
     validate_release_inputs,
 )
 
+__all__ = [
+    "DEFAULT_NOTICE_PATTERNS",
+    "RUNTIME_NOTICE_PATTERNS",
+    "DEFAULT_PROFILE_OVERLAY_REPLACEMENTS",
+    "NoticeEntry",
+    "load_json_document",
+    "write_json_document",
+    "validate_payload_manifest",
+    "load_manifest",
+    "resolve_manifest_roots",
+    "_case_insensitive_replace",
+    "rewrite_windows_paths",
+    "_toolchain_python_relative_path",
+    "normalize_codeblocks_profile",
+    "normalize_codesnippets_ini",
+    "normalize_profile_bundle",
+    "build_profile_overlay_contract",
+    "validate_profile_overlay_contract",
+    "build_managed_profile",
+    "materialize_profile_seed",
+    "_is_runtime_notice_pattern",
+    "_notice_category_from_name",
+    "collect_notice_inventory",
+    "_render_notice_inventory",
+    "_release_input_checks",
+    "validate_release_inputs",
+    "_validate_bundled_toolchain",
+    "_validate_manifest_literals",
+    "_validate_profile_rewrites",
+    "_as_windows_string",
+    "_ensure_str_list",
+    "_expand_manifest_path",
+    "_require_non_empty_string",
+]
+
 
 def _cmd_validate_manifest(args: argparse.Namespace) -> int:
     load_manifest(args.manifest)

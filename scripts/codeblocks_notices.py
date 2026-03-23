@@ -50,9 +50,10 @@ def collect_notice_inventory(root: str | Path, manifest: Mapping[str, object] | 
     categories: Mapping[str, Iterable[str]] = {}
     if manifest is not None:
         patterns = ensure_str_list(manifest.get("included_patterns", patterns), "included_patterns")
-        categories = manifest.get("categories", {})
-        if not isinstance(categories, Mapping):
+        raw_categories = manifest.get("categories", {})
+        if not isinstance(raw_categories, Mapping):
             raise ValueError("categories must be a JSON object")
+        categories = raw_categories
 
     root_path = Path(root)
     entries = [

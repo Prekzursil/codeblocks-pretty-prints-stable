@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import argparse
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Sequence
+from defusedxml import ElementTree
 
 SCRIPT_PATH_PREFIX = "scripts/"
 
@@ -17,7 +17,7 @@ def _normalize_filename(value: str) -> str:
 
 def normalize_coverage_xml_paths(path: str | Path) -> bool:
     coverage_path = Path(path)
-    tree = ET.parse(coverage_path)
+    tree = ElementTree.parse(coverage_path)
     root = tree.getroot()
     changed = False
     for class_element in root.findall('.//class'):

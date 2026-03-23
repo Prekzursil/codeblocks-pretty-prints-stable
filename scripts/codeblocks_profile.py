@@ -15,6 +15,7 @@ from scripts.codeblocks_shared import (
 
 
 GENERIC_MINGW_ROOT = Path(r"C:\MinGW")
+GDB_EXECUTABLE = "gdb.exe"
 DEFAULT_PROFILE_OVERLAY_REPLACEMENTS = (
     {
         "path": "default.conf",
@@ -67,12 +68,12 @@ def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
     replacements = [
         (roots["current_install_root"] / "MinGW" / python_relative_path, toolchain_share_python),
         (roots["current_install_root"] / "MINGW" / python_relative_path, toolchain_share_python),
-        (roots["current_install_root"] / "MinGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
-        (roots["current_install_root"] / "MINGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
+        (roots["current_install_root"] / "MinGW" / "bin" / GDB_EXECUTABLE, roots["debugger_executable"]),
+        (roots["current_install_root"] / "MINGW" / "bin" / GDB_EXECUTABLE, roots["debugger_executable"]),
         (roots["current_install_root"] / "MinGW", roots["toolchain_root"]),
         (roots["current_install_root"] / "MINGW", roots["toolchain_root"]),
         (GENERIC_MINGW_ROOT / python_relative_path, toolchain_share_python),
-        (GENERIC_MINGW_ROOT / "bin" / "gdb.exe", roots["debugger_executable"]),
+        (GENERIC_MINGW_ROOT / "bin" / GDB_EXECUTABLE, roots["debugger_executable"]),
         (GENERIC_MINGW_ROOT, roots["toolchain_root"]),
         (roots["current_install_root"], roots["edition_install_root"]),
         (roots["current_profile_root"], roots["managed_profile_root"]),
