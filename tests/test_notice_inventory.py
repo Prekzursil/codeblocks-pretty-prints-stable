@@ -42,7 +42,17 @@ class NoticeInventoryTests(unittest.TestCase):
             self.assertEqual(categories["MinGW/lib/libstdc++.dll.a-gdb.py"], "runtime_notice")
             self.assertEqual(categories["share/CodeBlocks/scripts/stl-views-1.0.3.gdb"], "runtime_notice")
 
+    def test_collect_notice_inventory_skips_git_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            root = Path(tempdir)
+            (root / ".git").mkdir()
+            (root / ".git" / "LICENSE.txt").write_text("ignored", encoding="utf-8")
+            (root / "LICENSE.txt").write_text("included", encoding="utf-8")
+
+            manifest = load_json_document(Path(__file__).resolve().parents[1] / "manifests" / "notice_inventory.json")
+            entries = collect_notice_inventory(root, manifest)
+            self.assertEqual([entry.path for entry in entries], ["LICENSE.txt"])
+
 
 if __name__ == "__main__":
     unittest.main()
-

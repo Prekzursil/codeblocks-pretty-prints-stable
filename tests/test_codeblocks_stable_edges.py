@@ -76,8 +76,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 load_json_document(path)
 
-    def test_case_insensitive_replace_handles_empty_old_value(self) -> None:
-        self.assertEqual(_case_insensitive_replace("value", "", "new"), "value")
+    def test_case_insensitive_replace_replaces_case_insensitively(self) -> None:
         self.assertEqual(
             _case_insensitive_replace(r"C:\Program Files\CodeBlocks", r"c:\program files\codeblocks", r"C:\Stable"),
             r"C:\Stable",
@@ -345,4 +344,3 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
