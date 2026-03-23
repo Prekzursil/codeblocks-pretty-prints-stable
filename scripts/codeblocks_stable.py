@@ -1,285 +1,83 @@
 from __future__ import annotations
 
 import argparse
-import dataclasses
-import fnmatch
 import json
-import os
-import re
 import sys
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
+from scripts import codeblocks_notices, codeblocks_profile, codeblocks_shared, codeblocks_validation
 
-@dataclasses.dataclass(frozen=True)
-class NoticeEntry:
-    path: str
-    category: str
+DEFAULT_NOTICE_PATTERNS = codeblocks_notices.DEFAULT_NOTICE_PATTERNS
+RUNTIME_NOTICE_PATTERNS = codeblocks_notices.RUNTIME_NOTICE_PATTERNS
+collect_notice_inventory = codeblocks_notices.collect_notice_inventory
+_is_runtime_notice_pattern = codeblocks_notices.is_runtime_notice_pattern
+_notice_category_from_name = codeblocks_notices.notice_category_from_name
+_render_notice_inventory = codeblocks_notices.render_notice_inventory
 
+DEFAULT_PROFILE_OVERLAY_REPLACEMENTS = codeblocks_profile.DEFAULT_PROFILE_OVERLAY_REPLACEMENTS
+build_managed_profile = codeblocks_profile.build_managed_profile
+build_profile_overlay_contract = codeblocks_profile.build_profile_overlay_contract
+_case_insensitive_replace = codeblocks_profile.case_insensitive_replace
+materialize_profile_seed = codeblocks_profile.materialize_profile_seed
+normalize_codeblocks_profile = codeblocks_profile.normalize_codeblocks_profile
+normalize_codesnippets_ini = codeblocks_profile.normalize_codesnippets_ini
+normalize_profile_bundle = codeblocks_profile.normalize_profile_bundle
+resolve_manifest_roots = codeblocks_profile.resolve_manifest_roots
+rewrite_windows_paths = codeblocks_profile.rewrite_windows_paths
+_toolchain_python_relative_path = codeblocks_profile.toolchain_python_relative_path
+validate_profile_overlay_contract = codeblocks_profile.validate_profile_overlay_contract
 
-DEFAULT_NOTICE_PATTERNS = [
-    "LICENSE*",
-    "COPYING*",
-    "NOTICE*",
-    "AUTHORS*",
-    "README*",
-    "gpl.7",
-    "gdbinit",
-    "*.gdb.py",
-    "*dll.a-gdb.py",
-    "printers.py",
-    "xmethods.py",
-    "stl-views-*.gdb",
+NoticeEntry = codeblocks_shared.NoticeEntry
+_as_windows_string = codeblocks_shared.as_windows_string
+_ensure_str_list = codeblocks_shared.ensure_str_list
+_expand_manifest_path = codeblocks_shared.expand_manifest_path
+load_json_document = codeblocks_shared.load_json_document
+_require_non_empty_string = codeblocks_shared.require_non_empty_string
+write_json_document = codeblocks_shared.write_json_document
+
+load_manifest = codeblocks_validation.load_manifest
+_release_input_checks = codeblocks_validation.release_input_checks
+_validate_bundled_toolchain = codeblocks_validation.validate_bundled_toolchain
+_validate_manifest_literals = codeblocks_validation.validate_manifest_literals
+validate_payload_manifest = codeblocks_validation.validate_payload_manifest
+_validate_profile_rewrites = codeblocks_validation.validate_profile_rewrites
+validate_release_inputs = codeblocks_validation.validate_release_inputs
+
+__all__ = [
+    "DEFAULT_NOTICE_PATTERNS",
+    "RUNTIME_NOTICE_PATTERNS",
+    "DEFAULT_PROFILE_OVERLAY_REPLACEMENTS",
+    "NoticeEntry",
+    "load_json_document",
+    "write_json_document",
+    "validate_payload_manifest",
+    "load_manifest",
+    "resolve_manifest_roots",
+    "_case_insensitive_replace",
+    "rewrite_windows_paths",
+    "_toolchain_python_relative_path",
+    "normalize_codeblocks_profile",
+    "normalize_codesnippets_ini",
+    "normalize_profile_bundle",
+    "build_profile_overlay_contract",
+    "validate_profile_overlay_contract",
+    "build_managed_profile",
+    "materialize_profile_seed",
+    "_is_runtime_notice_pattern",
+    "_notice_category_from_name",
+    "collect_notice_inventory",
+    "_render_notice_inventory",
+    "_release_input_checks",
+    "validate_release_inputs",
+    "_validate_bundled_toolchain",
+    "_validate_manifest_literals",
+    "_validate_profile_rewrites",
+    "_as_windows_string",
+    "_ensure_str_list",
+    "_expand_manifest_path",
+    "_require_non_empty_string",
 ]
-
-RUNTIME_NOTICE_PATTERNS = {"gdbinit", "printers.py", "xmethods.py"}
-
-
-def load_json_document(path: str | Path) -> dict[str, Any]:
-    file_path = Path(path)
-    with file_path.open("r", encoding="utf-8") as handle:
-        payload = json.load(handle)
-    if not isinstance(payload, dict):
-        raise ValueError(f"{file_path} must contain a JSON object")
-    return payload
-
-
-def _as_windows_string(value: str | Path) -> str:
-    return str(value).replace("/", "\\")
-
-
-def _expand_manifest_path(value: str | Path) -> Path:
-    return Path(os.path.expandvars(_as_windows_string(value)))
-
-
-def _ensure_str_list(value: Any, label: str) -> list[str]:
-    if not isinstance(value, list) or not all(isinstance(item, str) and item.strip() for item in value):
-        raise ValueError(f"{label} must be a non-empty list of strings")
-    return [item.strip() for item in value]
-
-
-def _require_non_empty_string(value: Any, label: str) -> str:
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(f"{label} must be a non-empty string")
-    return value.strip()
-
-
-def validate_payload_manifest(manifest: Mapping[str, Any]) -> None:
-    required_keys = (
-        "schema_version",
-        "repo_name",
-        "edition_name",
-        "product_name",
-        "install_scope",
-        "host_architecture",
-        "target_architectures",
-        "current_official_install_root",
-        "edition_install_root",
-        "current_profile_root",
-        "managed_profile_root",
-        "toolchain_relative_root",
-        "toolchain_python_relative_root",
-        "bundled_toolchain",
-        "profile_sources",
-        "profile_outputs",
-        "notice_name_patterns",
-        "profile_rewrites",
-    )
-    missing = [key for key in required_keys if key not in manifest]
-    if missing:
-        raise ValueError(f"manifest missing keys: {', '.join(missing)}")
-
-    expected_literals = {
-        "schema_version": 1,
-        "install_scope": "machine-wide",
-        "host_architecture": "x64",
-    }
-    for key, expected in expected_literals.items():
-        if manifest[key] != expected:
-            raise ValueError(f"{key} must be {expected}")
-
-    for key in ("repo_name", "edition_name", "product_name"):
-        _require_non_empty_string(manifest[key], key)
-
-    if not {"x86", "x64"}.issubset(set(_ensure_str_list(manifest["target_architectures"], "target_architectures"))):
-        raise ValueError("target_architectures must include x86 and x64")
-
-    bundled_toolchain = manifest["bundled_toolchain"]
-    if not isinstance(bundled_toolchain, dict):
-        raise ValueError("bundled_toolchain must be a JSON object")
-    for key in ("gcc_version", "gdb_version", "family"):
-        _require_non_empty_string(bundled_toolchain.get(key), f"bundled_toolchain.{key}")
-
-    _ensure_str_list(manifest["profile_sources"], "profile_sources")
-    _ensure_str_list(manifest["profile_outputs"], "profile_outputs")
-    _ensure_str_list(manifest["notice_name_patterns"], "notice_name_patterns")
-
-    profile_rewrites = manifest["profile_rewrites"]
-    if not isinstance(profile_rewrites, dict):
-        raise ValueError("profile_rewrites must be a JSON object")
-    for key in ("debugger_executable", "debugger_python_root", "toolchain_root", "profile_root"):
-        _require_non_empty_string(profile_rewrites.get(key), f"profile_rewrites.{key}")
-
-
-def load_manifest(path: str | Path) -> dict[str, Any]:
-    manifest = load_json_document(path)
-    validate_payload_manifest(manifest)
-    return manifest
-
-
-def resolve_manifest_roots(manifest: Mapping[str, Any]) -> dict[str, Path]:
-    validate_payload_manifest(manifest)
-    rewrites = manifest["profile_rewrites"]
-    return {
-        "current_install_root": _expand_manifest_path(manifest["current_official_install_root"]),
-        "edition_install_root": _expand_manifest_path(manifest["edition_install_root"]),
-        "current_profile_root": _expand_manifest_path(manifest["current_profile_root"]),
-        "managed_profile_root": _expand_manifest_path(manifest["managed_profile_root"]),
-        "toolchain_root": _expand_manifest_path(rewrites["toolchain_root"]),
-        "debugger_python_root": _expand_manifest_path(rewrites["debugger_python_root"]),
-        "debugger_executable": _expand_manifest_path(rewrites["debugger_executable"]),
-    }
-
-
-def _case_insensitive_replace(text: str, old: str, new: str) -> str:
-    pattern = re.compile(re.escape(old), flags=re.IGNORECASE)
-    return pattern.sub(lambda _match: new, text)
-
-
-def rewrite_windows_paths(text: str, replacements: Sequence[tuple[str, str]]) -> str:
-    rewritten = text
-    token_map: list[tuple[str, str]] = []
-    for index, (old, new) in enumerate(
-        sorted(replacements, key=lambda pair: len(_as_windows_string(pair[0])), reverse=True)
-    ):
-        token = f"__CBSTABLE_TOKEN_{index}__"
-        token_map.append((token, _as_windows_string(new)))
-        rewritten = re.sub(re.escape(_as_windows_string(old)), token, rewritten, flags=re.IGNORECASE)
-    for token, replacement in token_map:
-        rewritten = rewritten.replace(token, replacement)
-    return rewritten
-
-
-def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
-    roots = resolve_manifest_roots(manifest)
-    toolchain_share_python = roots["toolchain_root"] / "share" / "gcc-14.2.0" / "python"
-    replacements = [
-        (roots["current_install_root"] / "MinGW" / "share" / "gcc-14.2.0" / "python", toolchain_share_python),
-        (roots["current_install_root"] / "MINGW" / "share" / "gcc-14.2.0" / "python", toolchain_share_python),
-        (roots["current_install_root"] / "MinGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
-        (roots["current_install_root"] / "MINGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
-        (roots["current_install_root"] / "MinGW", roots["toolchain_root"]),
-        (roots["current_install_root"] / "MINGW", roots["toolchain_root"]),
-        (roots["current_install_root"], roots["edition_install_root"]),
-        (roots["current_profile_root"], roots["managed_profile_root"]),
-    ]
-    return rewrite_windows_paths(text, replacements)
-
-
-def normalize_codesnippets_ini(text: str, manifest: Mapping[str, Any]) -> str:
-    roots = resolve_manifest_roots(manifest)
-    replacements = [
-        (roots["current_profile_root"] / "codesnippets.xml", roots["managed_profile_root"] / "codesnippets.xml"),
-        (roots["current_profile_root"], roots["managed_profile_root"]),
-    ]
-    return rewrite_windows_paths(text, replacements)
-
-
-def normalize_profile_bundle(files: Mapping[str, str], manifest: Mapping[str, Any]) -> dict[str, str]:
-    missing = set(_ensure_str_list(manifest["profile_sources"], "profile_sources")) - set(files)
-    if missing:
-        raise ValueError(f"profile bundle missing files: {', '.join(sorted(missing))}")
-
-    normalizers = {
-        "default.conf": normalize_codeblocks_profile,
-        "codesnippets.ini": normalize_codesnippets_ini,
-    }
-    normalized: dict[str, str] = {}
-    for name, content in files.items():
-        transform = normalizers.get(name)
-        normalized[name] = transform(content, manifest) if transform else content
-    return normalized
-
-
-def build_managed_profile(source_profile_dir: str | Path, manifest: Mapping[str, Any]) -> dict[str, str]:
-    profile_root = Path(source_profile_dir)
-    files = {
-        name: (profile_root / name).read_text(encoding="utf-8")
-        for name in _ensure_str_list(manifest["profile_sources"], "profile_sources")
-    }
-    return normalize_profile_bundle(files, manifest)
-
-
-def _is_runtime_notice_pattern(pattern: str) -> bool:
-    normalized = pattern.lower()
-    return normalized in RUNTIME_NOTICE_PATTERNS or normalized.endswith(".gdb.py") or normalized.startswith("stl-views-")
-
-
-def _notice_category_from_name(name: str, categories: Mapping[str, Iterable[str]], default_patterns: Sequence[str]) -> str | None:
-    lowered_name = name.lower()
-    for category, patterns in categories.items():
-        if any(fnmatch.fnmatchcase(lowered_name, str(pattern).lower()) for pattern in patterns):
-            return str(category)
-    for pattern in default_patterns:
-        if fnmatch.fnmatchcase(lowered_name, pattern.lower()):
-            return "runtime_notice" if _is_runtime_notice_pattern(pattern) else "license"
-    return None
-
-
-def collect_notice_inventory(root: str | Path, manifest: Mapping[str, Any] | None = None) -> list[NoticeEntry]:
-    patterns = DEFAULT_NOTICE_PATTERNS
-    categories: Mapping[str, Iterable[str]] = {}
-    if manifest is not None:
-        patterns = _ensure_str_list(manifest.get("included_patterns", patterns), "included_patterns")
-        categories = manifest.get("categories", {})
-        if not isinstance(categories, Mapping):
-            raise ValueError("categories must be a JSON object")
-
-    root_path = Path(root)
-    entries = [
-        NoticeEntry(path=file_path.relative_to(root_path).as_posix(), category=category)
-        for file_path in root_path.rglob("*")
-        if file_path.is_file() and ".git" not in file_path.parts
-        for category in [_notice_category_from_name(file_path.name, categories, patterns)]
-        if category is not None
-    ]
-    entries.sort(key=lambda item: item.path.lower())
-    return entries
-
-
-def _render_notice_inventory(entries: Sequence[NoticeEntry]) -> str:
-    body = [f"- {entry.path} ({entry.category})" for entry in entries] or ["- None found"]
-    return "\n".join(["# Notice inventory", "", *body, ""])
-
-
-def validate_release_inputs(repo_root: str | Path) -> dict[str, Any]:
-    repo = Path(repo_root)
-    manifest = load_manifest(repo / "manifests" / "codeblocks_stable_toolchain.json")
-    notices_manifest = load_json_document(repo / "manifests" / "notice_inventory.json")
-    overlay_seed = load_json_document(repo / "overlay" / "profile_seed.json")
-    notices = collect_notice_inventory(repo, notices_manifest)
-
-    checks = [
-        (notices_manifest.get("schema_version") == 1, "notice_inventory schema_version must be 1"),
-        (isinstance(notices_manifest.get("included_patterns"), list), "notice_inventory included_patterns must be a list"),
-        (overlay_seed.get("schema_version") == 1, "overlay profile_seed schema_version must be 1"),
-        (
-            isinstance(overlay_seed.get("debugger_init_commands"), list) and bool(overlay_seed["debugger_init_commands"]),
-            "overlay profile_seed debugger_init_commands must be a non-empty list",
-        ),
-        (bool(notices), "notice inventory is empty"),
-    ]
-    for condition, message in checks:
-        if not condition:
-            raise ValueError(message)
-
-    return {
-        "manifest": manifest,
-        "notice_count": len(notices),
-        "notices": notices,
-        "overlay_seed": overlay_seed,
-    }
 
 
 def _cmd_validate_manifest(args: argparse.Namespace) -> int:
@@ -292,7 +90,13 @@ def _cmd_inventory_notices(args: argparse.Namespace) -> int:
     notice_manifest = load_json_document(args.notice_manifest) if args.notice_manifest else None
     if notice_manifest is not None and notice_manifest.get("schema_version") != 1:
         raise SystemExit("notice manifest schema_version must be 1")
-    payload = [dataclasses.asdict(entry) for entry in collect_notice_inventory(args.root, notice_manifest)]
+    payload = [
+        {
+            "path": entry.path,
+            "category": entry.category,
+        }
+        for entry in collect_notice_inventory(args.root, notice_manifest)
+    ]
     if args.output == "-":
         json.dump(payload, sys.stdout, indent=2)
         sys.stdout.write("\n")
@@ -310,6 +114,17 @@ def _cmd_normalize_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_materialize_profile_seed(args: argparse.Namespace) -> int:
+    manifest = load_manifest(args.manifest)
+    materialize_profile_seed(
+        args.source_profile,
+        manifest,
+        args.output_dir,
+        args.replacements_path,
+    )
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch-and-package helpers for Code::Blocks Stable Toolchain Edition.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -323,6 +138,16 @@ def _build_parser() -> argparse.ArgumentParser:
     normalize_profile.add_argument("source_profile", type=Path)
     normalize_profile.add_argument("output_dir", type=Path)
     normalize_profile.set_defaults(func=_cmd_normalize_profile)
+
+    materialize_profile = subparsers.add_parser(
+        "materialize-profile-seed",
+        help="Write a normalized managed profile seed bundle and overlay contract.",
+    )
+    materialize_profile.add_argument("manifest", type=Path)
+    materialize_profile.add_argument("source_profile", type=Path)
+    materialize_profile.add_argument("output_dir", type=Path)
+    materialize_profile.add_argument("replacements_path", type=Path)
+    materialize_profile.set_defaults(func=_cmd_materialize_profile_seed)
 
     inventory_notices = subparsers.add_parser("inventory-notices", help="Inventory redistributable notice files.")
     inventory_notices.add_argument("root", type=Path)

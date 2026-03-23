@@ -1,0 +1,8 @@
+---
+exclude_paths:
+  - "build/**"
+  - "dist/**"
+  - "overlay/profile-seed/**"
+  - "package-lock.json"
+  - "playwright.config.cjs"
+  - "scripts/provider_ui/**"
