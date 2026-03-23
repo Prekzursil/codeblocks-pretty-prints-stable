@@ -1,0 +1,57 @@
+{
+  "project": {
+    "name": "Code::Blocks Stable Toolchain Edition",
+    "repo": "codeblocks-pretty-prints-stable",
+    "distribution_model": "fetch-and-package",
+    "install_scope": "machine-wide",
+    "edition_path": "C:\\Program Files\\CodeBlocks Stable Toolchain Edition"
+  },
+  "baseline": {
+    "official_codeblocks_version": "25.03",
+    "bundled_gcc_version": "14.2.0",
+    "bundled_gdb_version": "16.2",
+    "toolchain_root": "C:\\Program Files\\CodeBlocks\\MinGW",
+    "platform_support": [
+      "Windows 10 x64",
+      "Windows 11 x64"
+    ],
+    "target_architectures": [
+      "Win32",
+      "x64"
+    ]
+  },
+  "release_policy": {
+    "public_repo": true,
+    "public_binary_releases": "gated",
+    "backup_first_migration": true,
+    "replace_official_codeblocks_after_confirmation": true,
+    "keep_unrelated_toolchains": true,
+    "path_export_default": false
+  },
+  "notice_families": [
+    "Code::Blocks IDE",
+    "MinGW-w64 GCC/G++",
+    "Binutils",
+    "GDB",
+    "libstdc++ pretty-printers",
+    "Python runtime",
+    "Bundled docs and helper scripts"
+  ],
+  "verification": {
+    "required_truth_levels": [
+      "repo-green",
+      "provider-green"
+    ],
+    "strict_zero_stack": [
+      "QLTY",
+      "Codacy",
+      "Semgrep",
+      "DeepScan",
+      "Sonar",
+      "Codecov",
+      "Sentry",
+      "Coverage 100"
+    ]
+  },
+  "status": "draft-baseline"
+}

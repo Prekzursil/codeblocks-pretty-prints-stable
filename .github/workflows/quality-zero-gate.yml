@@ -1,0 +1,37 @@
+name: Quality Zero Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-contract:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate release manifest and GitHub contract
+        shell: pwsh
+        run: |
+          $manifest = Get-Content release-manifest.json -Raw | ConvertFrom-Json
+          if ($manifest.release_policy.replace_official_codeblocks_after_confirmation -ne $true) {
+            throw 'Release policy must preserve the confirmed-replacement behavior.'
+          }
+          if ($manifest.release_policy.keep_unrelated_toolchains -ne $true) {
+            throw 'Release policy must preserve unrelated third-party toolchains.'
+          }
+          if ($manifest.release_policy.path_export_default -ne $false) {
+            throw 'PATH export must be off by default.'
+          }
+
+          $codeowners = Get-Content .github/CODEOWNERS -Raw
+          if ($codeowners -notmatch '@Prekzursil') {
+            throw 'CODEOWNERS must explicitly own the governance surface.'
+          }
+

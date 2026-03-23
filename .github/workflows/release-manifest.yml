@@ -1,0 +1,51 @@
+name: Release Manifest Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-manifest.json'
+      - 'THIRD_PARTY_NOTICES.md'
+      - '.github/workflows/release-manifest.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'release-manifest.json'
+      - 'THIRD_PARTY_NOTICES.md'
+      - '.github/workflows/release-manifest.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-manifest:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse release manifest
+        shell: pwsh
+        run: |
+          $manifest = Get-Content release-manifest.json -Raw | ConvertFrom-Json
+          if ($manifest.project.name -ne 'Code::Blocks Stable Toolchain Edition') {
+            throw 'Manifest project name mismatch.'
+          }
+          if ($manifest.baseline.official_codeblocks_version -ne '25.03') {
+            throw 'Manifest must seed the known local baseline version.'
+          }
+          if ($manifest.baseline.bundled_gcc_version -ne '14.2.0') {
+            throw 'Manifest must seed the known bundled GCC version.'
+          }
+          if ($manifest.baseline.bundled_gdb_version -ne '16.2') {
+            throw 'Manifest must seed the known bundled GDB version.'
+          }
+
+      - name: Validate notices policy
+        shell: pwsh
+        run: |
+          $text = Get-Content THIRD_PARTY_NOTICES.md -Raw
+          if ($text -notmatch 'Code::Blocks') { throw 'Notice policy must mention Code::Blocks.' }
+          if ($text -notmatch 'MinGW-w64') { throw 'Notice policy must mention the MinGW-w64 family.' }
+          if ($text -notmatch 'Python') { throw 'Notice policy must mention Python runtime notices.' }
+

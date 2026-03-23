@@ -1,0 +1,93 @@
+name: Quality Zero Platform
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  repo-shape:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify repository contract
+        shell: pwsh
+        run: |
+          $required = @(
+            'README.md',
+            'AGENTS.md',
+            'SECURITY.md',
+            'CONTRIBUTING.md',
+            'SUPPORT.md',
+            'LICENSE',
+            'THIRD_PARTY_NOTICES.md',
+            'release-manifest.json',
+            '.github/CODEOWNERS',
+            '.github/dependabot.yml',
+            '.github/pull_request_template.md'
+          )
+
+          $missing = @()
+          foreach ($item in $required) {
+            if (-not (Test-Path $item)) {
+              $missing += $item
+            }
+          }
+
+          if ($missing.Count -gt 0) {
+            throw "Missing required files: $($missing -join ', ')"
+          }
+
+          $readme = Get-Content README.md -Raw
+          foreach ($needle in @(
+            'Code::Blocks Stable Toolchain Edition',
+            'fetch-and-package',
+            'machine-wide',
+            'managed fresh profile'
+          )) {
+            if ($readme -notmatch [regex]::Escape($needle)) {
+              throw "README.md missing required phrase: $needle"
+            }
+          }
+
+          $manifest = Get-Content release-manifest.json -Raw | ConvertFrom-Json
+          if ($manifest.project.name -ne 'Code::Blocks Stable Toolchain Edition') {
+            throw 'Release manifest project name does not match the edition name.'
+          }
+          if ($manifest.project.repo -ne 'codeblocks-pretty-prints-stable') {
+            throw 'Release manifest repo name does not match.'
+          }
+          if ($manifest.release_policy.public_repo -ne $true) {
+            throw 'Release manifest should mark the repo as public.'
+          }
+
+  notice-and-support-shape:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify support and notice boundaries
+        shell: pwsh
+        run: |
+          $security = Get-Content SECURITY.md -Raw
+          $support = Get-Content SUPPORT.md -Raw
+          $notices = Get-Content THIRD_PARTY_NOTICES.md -Raw
+
+          foreach ($pair in @(
+            @{ Name = 'SECURITY.md'; Content = $security; Needles = @('private', 'security', 'report') },
+            @{ Name = 'SUPPORT.md'; Content = $support; Needles = @('Windows 10 x64', 'Windows 11 x64', 'machine-wide installs only') },
+            @{ Name = 'THIRD_PARTY_NOTICES.md'; Content = $notices; Needles = @('release manifest', 'notice bundle', 'fetched upstream payloads') }
+          )) {
+            foreach ($needle in $pair.Needles) {
+              if ($pair.Content -notmatch [regex]::Escape($needle)) {
+                throw "$($pair.Name) missing required phrase: $needle"
+              }
+            }
+          }
+

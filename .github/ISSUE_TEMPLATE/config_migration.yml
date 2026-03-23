@@ -1,0 +1,30 @@
+name: Config migration issue
+description: Report an issue with preserved settings, key bindings, snippets, or debugger setup.
+labels: [migration]
+body:
+  - type: input
+    id: old-version
+    attributes:
+      label: Previous version
+      placeholder: Code::Blocks 25.03
+    validations:
+      required: true
+  - type: textarea
+    id: preserved
+    attributes:
+      label: Settings that should have been preserved
+      placeholder: Key bindings, debugger init, snippets, editor options, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: lost
+    attributes:
+      label: Settings that were lost or rewritten incorrectly
+      placeholder: Describe the mismatch.
+    validations:
+      required: true
+  - type: textarea
+    id: install-path
+    attributes:
+      label: Install path
+      placeholder: C:\Program Files\CodeBlocks Stable Toolchain Edition

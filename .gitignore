@@ -1,0 +1,43 @@
+# Build / packaging outputs
+build/
+dist/
+out/
+artifacts/
+release/
+
+# Logs and reports
+*.log
+*.out
+*.err
+*.tmp
+*.bak
+
+# Python / test caches
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / JS tooling
+node_modules/
+.npm/
+.pnpm-store/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Generated archives or bundles
+*.zip
+*.7z
+*.rar
+
+# Local workspace state
+.codex/
+.idea/
+.vscode/
+

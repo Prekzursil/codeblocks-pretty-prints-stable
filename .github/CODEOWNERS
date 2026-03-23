@@ -1,0 +1,12 @@
+* @Prekzursil
+
+# Keep governance and release wiring explicitly owned.
+/.github/ @Prekzursil
+/README.md @Prekzursil
+/AGENTS.md @Prekzursil
+/SECURITY.md @Prekzursil
+/CONTRIBUTING.md @Prekzursil
+/SUPPORT.md @Prekzursil
+/LICENSE @Prekzursil
+/THIRD_PARTY_NOTICES.md @Prekzursil
+/release-manifest.json @Prekzursil

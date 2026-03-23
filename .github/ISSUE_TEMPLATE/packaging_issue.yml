@@ -1,0 +1,38 @@
+name: Packaging issue
+description: Report a problem with release manifests, notice bundling, or installer packaging.
+labels: [packaging]
+body:
+  - type: input
+    id: release
+    attributes:
+      label: Release or draft build
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: packaging-stage
+    attributes:
+      label: Packaging stage
+      options:
+        - Fetch
+        - Hash verification
+        - Notice harvesting
+        - Overlay application
+        - Installer build
+        - Release publish
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      placeholder: What part of the packaging/release flow is wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Include the manifest entry, hash, workflow run URL, or log excerpt if you have it.
+    validations:
+      required: true
