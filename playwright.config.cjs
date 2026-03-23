@@ -1,4 +1,4 @@
-var playwright = require("@playwright/test");
+const playwright = require("@playwright/test");
 
 module.exports = playwright.defineConfig({
   timeout: 60000,
