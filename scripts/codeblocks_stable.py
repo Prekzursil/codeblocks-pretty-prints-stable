@@ -34,6 +34,14 @@ DEFAULT_NOTICE_PATTERNS = [
 ]
 
 RUNTIME_NOTICE_PATTERNS = {"gdbinit", "printers.py", "xmethods.py"}
+GENERIC_MINGW_ROOT = Path(r"C:\MinGW")
+DEFAULT_PROFILE_OVERLAY_REPLACEMENTS = (
+    {
+        "path": "default.conf",
+        "search": r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-views-1.0.3.gdb",
+        "replace": "# Removed legacy dev-only stl-views hook",
+    },
+)
 
 
 def load_json_document(path: str | Path) -> dict[str, Any]:
@@ -43,6 +51,11 @@ def load_json_document(path: str | Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{file_path} must contain a JSON object")
     return payload
+
+
+def write_json_document(path: str | Path, payload: Mapping[str, Any]) -> None:
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text(json.dumps(dict(payload), indent=2) + "\n", encoding="utf-8")
 
 
 def _as_windows_string(value: str | Path) -> str:
@@ -161,16 +174,23 @@ def rewrite_windows_paths(text: str, replacements: Sequence[tuple[str, str]]) ->
     return rewritten
 
 
+def _toolchain_python_relative_path(manifest: Mapping[str, Any]) -> Path:
+    return Path(_as_windows_string(_require_non_empty_string(manifest["toolchain_python_relative_root"], "toolchain_python_relative_root")))
+
+
 def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
     roots = resolve_manifest_roots(manifest)
-    toolchain_share_python = roots["toolchain_root"] / "share" / "gcc-14.2.0" / "python"
+    toolchain_share_python = roots["toolchain_root"] / _toolchain_python_relative_path(manifest)
     replacements = [
-        (roots["current_install_root"] / "MinGW" / "share" / "gcc-14.2.0" / "python", toolchain_share_python),
-        (roots["current_install_root"] / "MINGW" / "share" / "gcc-14.2.0" / "python", toolchain_share_python),
+        (roots["current_install_root"] / "MinGW" / _toolchain_python_relative_path(manifest), toolchain_share_python),
+        (roots["current_install_root"] / "MINGW" / _toolchain_python_relative_path(manifest), toolchain_share_python),
         (roots["current_install_root"] / "MinGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
         (roots["current_install_root"] / "MINGW" / "bin" / "gdb.exe", roots["debugger_executable"]),
         (roots["current_install_root"] / "MinGW", roots["toolchain_root"]),
         (roots["current_install_root"] / "MINGW", roots["toolchain_root"]),
+        (GENERIC_MINGW_ROOT / _toolchain_python_relative_path(manifest), toolchain_share_python),
+        (GENERIC_MINGW_ROOT / "bin" / "gdb.exe", roots["debugger_executable"]),
+        (GENERIC_MINGW_ROOT, roots["toolchain_root"]),
         (roots["current_install_root"], roots["edition_install_root"]),
         (roots["current_profile_root"], roots["managed_profile_root"]),
     ]
@@ -202,6 +222,26 @@ def normalize_profile_bundle(files: Mapping[str, str], manifest: Mapping[str, An
     return normalized
 
 
+def build_profile_overlay_contract() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "replacements": [dict(entry) for entry in DEFAULT_PROFILE_OVERLAY_REPLACEMENTS],
+    }
+
+
+def validate_profile_overlay_contract(payload: Mapping[str, Any]) -> None:
+    if payload.get("schema_version") != 1:
+        raise ValueError("profile overlay schema_version must be 1")
+    replacements = payload.get("replacements")
+    if not isinstance(replacements, list):
+        raise ValueError("profile overlay replacements must be a list")
+    for index, entry in enumerate(replacements):
+        if not isinstance(entry, Mapping):
+            raise ValueError(f"profile overlay replacement {index} must be an object")
+        for key in ("path", "search", "replace"):
+            _require_non_empty_string(entry.get(key), f"profile overlay replacement {index}.{key}")
+
+
 def build_managed_profile(source_profile_dir: str | Path, manifest: Mapping[str, Any]) -> dict[str, str]:
     profile_root = Path(source_profile_dir)
     files = {
@@ -209,6 +249,21 @@ def build_managed_profile(source_profile_dir: str | Path, manifest: Mapping[str,
         for name in _ensure_str_list(manifest["profile_sources"], "profile_sources")
     }
     return normalize_profile_bundle(files, manifest)
+
+
+def materialize_profile_seed(
+    source_profile_dir: str | Path,
+    manifest: Mapping[str, Any],
+    output_dir: str | Path,
+    replacements_path: str | Path,
+) -> dict[str, str]:
+    profile = build_managed_profile(source_profile_dir, manifest)
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    for name, content in profile.items():
+        (destination / name).write_text(content, encoding="utf-8")
+    write_json_document(replacements_path, build_profile_overlay_contract())
+    return profile
 
 
 def _is_runtime_notice_pattern(pattern: str) -> bool:
@@ -258,12 +313,21 @@ def validate_release_inputs(repo_root: str | Path) -> dict[str, Any]:
     manifest = load_manifest(repo / "manifests" / "codeblocks_stable_toolchain.json")
     notices_manifest = load_json_document(repo / "manifests" / "notice_inventory.json")
     overlay_seed = load_json_document(repo / "overlay" / "profile_seed.json")
+    profile_seed_root = repo / "overlay" / "profile-seed"
+    replacements_path = repo / "overlay" / "profile-replacements.json"
     notices = collect_notice_inventory(repo, notices_manifest)
+    expected_profile_outputs = _ensure_str_list(manifest["profile_outputs"], "profile_outputs")
+    missing_profile_seed_files = [
+        name for name in expected_profile_outputs if not (profile_seed_root / name).is_file()
+    ]
 
     checks = [
         (notices_manifest.get("schema_version") == 1, "notice_inventory schema_version must be 1"),
         (isinstance(notices_manifest.get("included_patterns"), list), "notice_inventory included_patterns must be a list"),
         (overlay_seed.get("schema_version") == 1, "overlay profile_seed schema_version must be 1"),
+        (profile_seed_root.is_dir(), "materialized profile seed directory is missing"),
+        (not missing_profile_seed_files, f"profile seed is missing files: {', '.join(missing_profile_seed_files)}"),
+        (replacements_path.is_file(), "profile seed overlay contract is missing"),
         (
             isinstance(overlay_seed.get("debugger_init_commands"), list) and bool(overlay_seed["debugger_init_commands"]),
             "overlay profile_seed debugger_init_commands must be a non-empty list",
@@ -273,6 +337,9 @@ def validate_release_inputs(repo_root: str | Path) -> dict[str, Any]:
     for condition, message in checks:
         if not condition:
             raise ValueError(message)
+
+    profile_replacements = load_json_document(replacements_path)
+    validate_profile_overlay_contract(profile_replacements)
 
     return {
         "manifest": manifest,
@@ -310,6 +377,17 @@ def _cmd_normalize_profile(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_materialize_profile_seed(args: argparse.Namespace) -> int:
+    manifest = load_manifest(args.manifest)
+    materialize_profile_seed(
+        args.source_profile,
+        manifest,
+        args.output_dir,
+        args.replacements_path,
+    )
+    return 0
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Fetch-and-package helpers for Code::Blocks Stable Toolchain Edition.")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -323,6 +401,16 @@ def _build_parser() -> argparse.ArgumentParser:
     normalize_profile.add_argument("source_profile", type=Path)
     normalize_profile.add_argument("output_dir", type=Path)
     normalize_profile.set_defaults(func=_cmd_normalize_profile)
+
+    materialize_profile = subparsers.add_parser(
+        "materialize-profile-seed",
+        help="Write a normalized managed profile seed bundle and overlay contract.",
+    )
+    materialize_profile.add_argument("manifest", type=Path)
+    materialize_profile.add_argument("source_profile", type=Path)
+    materialize_profile.add_argument("output_dir", type=Path)
+    materialize_profile.add_argument("replacements_path", type=Path)
+    materialize_profile.set_defaults(func=_cmd_materialize_profile_seed)
 
     inventory_notices = subparsers.add_parser("inventory-notices", help="Inventory redistributable notice files.")
     inventory_notices.add_argument("root", type=Path)

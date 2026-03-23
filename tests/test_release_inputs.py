@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -21,4 +20,3 @@ class ReleaseInputValidationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

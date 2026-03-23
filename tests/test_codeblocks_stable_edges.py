@@ -225,6 +225,14 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 json.dumps(bad_notice),
                 encoding="utf-8",
             )
+            profile_seed_root = repo / "overlay" / "profile-seed"
+            profile_seed_root.mkdir()
+            for name in _base_manifest()["profile_outputs"]:
+                (profile_seed_root / name).write_text("seed", encoding="utf-8")
+            (repo / "overlay" / "profile-replacements.json").write_text(
+                json.dumps({"schema_version": 1, "replacements": []}),
+                encoding="utf-8",
+            )
             (repo / "overlay" / "profile_seed.json").write_text(
                 json.dumps({"schema_version": 2, "seed_name": "seed", "debugger_init_commands": ["x"]}),
                 encoding="utf-8",

@@ -123,6 +123,38 @@ begin
   Result := NormalizePath(Result);
 end;
 
+function PathLeafEquals(const Value, ExpectedLeaf: string): Boolean;
+var
+  Leaf: string;
+begin
+  Leaf := ExtractFileName(NormalizePath(Value));
+  Result := CompareText(Leaf, ExpectedLeaf) = 0;
+end;
+
+function CanSafelyRemoveLegacyInstall(const LegacyPath, EditionPath: string): Boolean;
+var
+  LegacyExePath: string;
+begin
+  Result := False;
+  if LegacyPath = '' then
+    Exit;
+
+  if CompareText(NormalizePath(LegacyPath), NormalizePath(EditionPath)) = 0 then
+    Exit;
+
+  if not DirExists(LegacyPath) then
+    Exit;
+
+  if not PathLeafEquals(LegacyPath, 'CodeBlocks') then
+    Exit;
+
+  LegacyExePath := AddBackslash(LegacyPath) + 'codeblocks.exe';
+  if not FileExists(LegacyExePath) then
+    Exit;
+
+  Result := True;
+end;
+
 function AppDataBackupRoot(): string;
 begin
   Result := ExpandConstant('{#ManagedBackupRoot}');
@@ -214,11 +246,10 @@ begin
       ExpandConstant('{app}')) then
       Log('Managed profile seeding returned a non-zero exit code.');
 
-    if RemoveLegacyInstall and (DetectedLegacyInstallPath <> '') and
-       (CompareText(NormalizePath(DetectedLegacyInstallPath), NormalizePath(ExpandConstant('{app}'))) <> 0) then
+    if RemoveLegacyInstall and
+       CanSafelyRemoveLegacyInstall(DetectedLegacyInstallPath, ExpandConstant('{app}')) then
     begin
-      if DirExists(DetectedLegacyInstallPath) then
-        DelTree(DetectedLegacyInstallPath, True, True, True);
+      DelTree(DetectedLegacyInstallPath, True, True, True);
     end;
   end;
 end;
@@ -227,4 +258,3 @@ function InitializeUninstall(): Boolean;
 begin
   Result := True;
 end;
-

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "replacements": [
+    {
+      "path": "default.conf",
+      "search": "source C:\\Devel\\CodeBlocks\\share\\codeblocks/scripts/stl-views-1.0.3.gdb",
+      "replace": "# Removed legacy dev-only stl-views hook"
+    }
+  ]
+}

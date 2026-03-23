@@ -87,6 +87,39 @@ end]]></str>
         )
         self.assertNotIn(r"C:\Program Files\CodeBlocks\MinGW", normalized)
 
+    def test_default_conf_rewrites_generic_mingw_root_and_custom_python_relative_path(self) -> None:
+        self.manifest["toolchain_python_relative_root"] = r"share\gcc-custom\python"
+        self.manifest["profile_rewrites"]["debugger_python_root"] = (
+            r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-custom\python"
+        )
+        text = r"""\
+<gdb_debugger>
+  <conf1>
+    <values>
+      <EXECUTABLE_PATH>
+        <str><![CDATA[C:\MinGW\bin\gdb.exe]]></str>
+      </EXECUTABLE_PATH>
+      <INIT_COMMANDS>
+        <str><![CDATA[set auto-load safe-path C:\MinGW\share\gcc-custom\python]]></str>
+      </INIT_COMMANDS>
+    </values>
+  </conf1>
+</gdb_debugger>
+<gcc_mingw32>
+  <MASTER_PATH><str><![CDATA[C:\MinGW]]></str></MASTER_PATH>
+</gcc_mingw32>
+"""
+        normalized = normalize_codeblocks_profile(text, self.manifest)
+        self.assertIn(
+            r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\bin\gdb.exe",
+            normalized,
+        )
+        self.assertIn(
+            r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-custom\python",
+            normalized,
+        )
+        self.assertNotIn(r"C:\MinGW", normalized)
+
     def test_codesnippets_ini_profile_root_is_normalized(self) -> None:
         text = r"""\
 ExternalEditor=
@@ -116,4 +149,3 @@ SnippetFolder=
 
 if __name__ == "__main__":
     unittest.main()
-
