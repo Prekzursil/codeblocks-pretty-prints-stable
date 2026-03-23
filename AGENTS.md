@@ -35,7 +35,6 @@ Before claiming this repo is ready, verify:
 - Avoid placeholders in user-facing docs.
 - If a future task needs implementation outside this scope, coordinate before touching it.
 
-
 ## Canonical verification command
 
 ```bash
