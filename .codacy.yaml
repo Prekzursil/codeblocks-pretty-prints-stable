@@ -1,5 +1,6 @@
 ---
 exclude_paths:
+  - "AGENTS.md"
   - ".github/workflows/**"
   - "build/**"
   - "dist/**"
