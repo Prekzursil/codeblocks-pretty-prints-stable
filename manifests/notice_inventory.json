@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "inventory_name": "codeblocks_stable_notice_inventory",
+  "description": "Notice and license file patterns used to harvest redistributed third-party notices from fetched payloads.",
+  "included_patterns": [
+    "LICENSE*",
+    "COPYING*",
+    "NOTICE*",
+    "AUTHORS*",
+    "README*",
+    "gpl.7",
+    "gdbinit",
+    "*.gdb.py",
+    "*dll.a-gdb.py",
+    "printers.py",
+    "xmethods.py",
+    "stl-views-*.gdb"
+  ],
+  "categories": {
+    "license": [
+      "LICENSE*",
+      "COPYING*",
+      "NOTICE*",
+      "AUTHORS*"
+    ],
+    "runtime_notice": [
+      "gpl.7",
+      "gdbinit",
+      "*.gdb.py",
+      "*dll.a-gdb.py",
+      "printers.py",
+      "xmethods.py",
+      "stl-views-*.gdb"
+    ]
+  }
+}
+

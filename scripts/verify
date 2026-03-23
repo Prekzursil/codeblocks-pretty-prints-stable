@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mkdir -p build
+
+if command -v python >/dev/null 2>&1; then
+  PYTHON_CMD=(python)
+elif command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD=(python3)
+elif command -v py >/dev/null 2>&1; then
+  PYTHON_CMD=(py -3)
+else
+  echo "No Python interpreter found on PATH." >&2
+  exit 1
+fi
+
+"${PYTHON_CMD[@]}" -m coverage run --rcfile=.coveragerc -m unittest discover -s tests -p 'test_*.py' -v
+"${PYTHON_CMD[@]}" -m coverage report --rcfile=.coveragerc
+"${PYTHON_CMD[@]}" -m coverage xml --rcfile=.coveragerc -o build/coverage.xml
+"${PYTHON_CMD[@]}" -m coverage json --rcfile=.coveragerc -o build/coverage.json
+"${PYTHON_CMD[@]}" -m coverage run -a --rcfile=.coveragerc -m scripts.quality.validate_release_inputs .
+"${PYTHON_CMD[@]}" -m coverage run -a --rcfile=.coveragerc -m scripts.codeblocks_stable validate-manifest manifests/codeblocks_stable_toolchain.json
+"${PYTHON_CMD[@]}" -m coverage run -a --rcfile=.coveragerc -m scripts.codeblocks_stable inventory-notices . --notice-manifest manifests/notice_inventory.json --output build/notice-inventory.json
+
+if command -v git >/dev/null 2>&1; then
+  git diff --check
+fi
+
+if command -v node >/dev/null 2>&1; then
+  node --check scripts/provider_ui/verify_dashboards.mjs
+fi

@@ -1,0 +1,119 @@
+from __future__ import annotations
+
+import unittest
+
+from scripts.codeblocks_stable import (
+    normalize_codeblocks_profile,
+    normalize_codesnippets_ini,
+    normalize_profile_bundle,
+)
+
+
+class ProfileNormalizationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.manifest = {
+            "schema_version": 1,
+            "repo_name": "codeblocks-pretty-prints-stable",
+            "edition_name": "Code::Blocks Stable Toolchain Edition",
+            "product_name": "Code::Blocks",
+            "install_scope": "machine-wide",
+            "host_architecture": "x64",
+            "target_architectures": ["x86", "x64"],
+            "current_official_install_root": r"C:\Program Files\CodeBlocks",
+            "edition_install_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition",
+            "current_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks",
+            "managed_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
+            "toolchain_relative_root": "MinGW",
+            "toolchain_python_relative_root": r"share\gcc-14.2.0\python",
+            "bundled_toolchain": {
+                "gcc_version": "14.2.0",
+                "gdb_version": "16.2",
+                "family": "mingw-w64-ucrt-posix-seh",
+            },
+            "profile_sources": [
+                "default.conf",
+                "default.cbKeyBinder20.conf",
+                "codesnippets.ini",
+            ],
+            "profile_outputs": [
+                "default.conf",
+                "default.cbKeyBinder20.conf",
+                "codesnippets.ini",
+            ],
+            "notice_name_patterns": ["LICENSE*", "gdbinit"],
+            "profile_rewrites": {
+                "debugger_executable": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\bin\gdb.exe",
+                "debugger_python_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-14.2.0\python",
+                "toolchain_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW",
+                "profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
+            },
+        }
+
+    def test_default_conf_rewrites_install_root_and_debugger_paths(self) -> None:
+        text = r"""\
+<gdb_debugger>
+  <conf1>
+    <values>
+      <EXECUTABLE_PATH>
+        <str><![CDATA[C:\Program Files\CodeBlocks\MINGW\bin\gdb.exe]]></str>
+      </EXECUTABLE_PATH>
+      <INIT_COMMANDS>
+        <str><![CDATA[set print pretty on
+set auto-load safe-path C:\Program Files\CodeBlocks\MinGW\share\gcc-14.2.0\python
+python
+sys.path.insert(0, r"C:\Program Files\CodeBlocks\MinGW\share\gcc-14.2.0\python")
+from libstdcxx.v6.printers import register_libstdcxx_printers
+register_libstdcxx_printers(None)
+end]]></str>
+      </INIT_COMMANDS>
+    </values>
+  </conf1>
+</gdb_debugger>
+<gcc_mingw64>
+  <MASTER_PATH><str><![CDATA[C:\Program Files\CodeBlocks\MinGW]]></str></MASTER_PATH>
+  <INCLUDE_DIRS><str><![CDATA[C:\Program Files\CodeBlocks\MinGW\include;]]></str></INCLUDE_DIRS>
+  <LIBRARY_DIRS><str><![CDATA[C:\Program Files\CodeBlocks\MinGW\lib;]]></str></LIBRARY_DIRS>
+</gcc_mingw64>
+"""
+        normalized = normalize_codeblocks_profile(text, self.manifest)
+        self.assertIn("CodeBlocks Stable Toolchain Edition", normalized)
+        self.assertIn(
+            r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\bin\gdb.exe",
+            normalized,
+        )
+        self.assertIn(
+            r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-14.2.0\python",
+            normalized,
+        )
+        self.assertNotIn(r"C:\Program Files\CodeBlocks\MinGW", normalized)
+
+    def test_codesnippets_ini_profile_root_is_normalized(self) -> None:
+        text = r"""\
+ExternalEditor=
+SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml
+SnippetFolder=
+"""
+        normalized = normalize_codesnippets_ini(text, self.manifest)
+        expected = (
+            r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition\codesnippets.xml"
+        )
+        self.assertIn(expected, normalized)
+        self.assertNotIn(
+            r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
+            normalized,
+        )
+
+    def test_profile_bundle_requires_expected_inputs(self) -> None:
+        bundle = {
+            "default.conf": r"C:\Program Files\CodeBlocks\MinGW",
+            "default.cbKeyBinder20.conf": "{}",
+            "codesnippets.ini": r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
+        }
+        normalized = normalize_profile_bundle(bundle, self.manifest)
+        self.assertIn("CodeBlocks Stable Toolchain Edition", normalized["default.conf"])
+        self.assertEqual(normalized["default.cbKeyBinder20.conf"], "{}")
+
+
+if __name__ == "__main__":
+    unittest.main()
+

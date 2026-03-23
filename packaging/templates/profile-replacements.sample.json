@@ -1,0 +1,21 @@
+{
+  "replacements": [
+    {
+      "path": "default.conf",
+      "search": "C:\\Program Files\\CodeBlocks",
+      "replace": "{INSTALL_ROOT}"
+    },
+    {
+      "path": "default.conf",
+      "search": "C:\\Devel\\CodeBlocks\\share\\codeblocks\\scripts\\stl-views-1.0.3.gdb",
+      "replace": "{INSTALL_ROOT}\\share\\CodeBlocks\\scripts\\stl-views-1.0.3.gdb"
+    },
+    {
+      "path": "default.conf",
+      "search": "C:\\Program Files\\CodeBlocks\\MinGW\\bin\\gdb.exe",
+      "replace": "{INSTALL_ROOT}\\MinGW\\bin\\gdb.exe"
+    }
+  ]
+}
+
+

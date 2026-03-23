@@ -28,19 +28,19 @@ This repository is intentionally a **fetch-and-package** project:
 
 ## Core promises
 
-1. **Same app feel, better defaults**  
+1. **Same app feel, better defaults**
    The UI stays basically Code::Blocks; the package only changes the parts that matter for reliability.
 
-2. **Pinned toolchain resolution**  
+2. **Pinned toolchain resolution**
    Compiler, linker, debugger, and pretty-printer paths are set explicitly inside the edition install root.
 
-3. **Managed profile seeding**  
+3. **Managed profile seeding**
    We preserve known-good user settings intentionally, rather than merging arbitrary drift into a live profile.
 
-4. **Safe cleanup boundaries**  
+4. **Safe cleanup boundaries**
    We replace or remove our own edition footprint and the confirmed official Code::Blocks install only after confirmation. Unrelated toolchains remain untouched unless a future advanced cleanup flow explicitly opts in.
 
-5. **Release truth is evidence-backed**  
+5. **Release truth is evidence-backed**
    Release artifacts are gated on manifest/hash/notice validation, and the repo is designed to support the strict-zero workflow stack used elsewhere in the user’s control-plane repos.
 
 ## Repository layout

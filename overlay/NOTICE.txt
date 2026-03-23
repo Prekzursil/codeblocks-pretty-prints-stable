@@ -1,0 +1,8 @@
+Code::Blocks Stable Toolchain Edition
+=====================================
+
+This repository includes a curated release layer and notice-harvesting helpers.
+Third-party notices for redistributed payloads are expected to be harvested
+from the fetched upstream payloads during release assembly and staged with the
+installer artifacts.
+

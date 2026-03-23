@@ -1,0 +1,4 @@
+Placeholder license bucket for the curated release layer.
+This directory is reserved for redistributed upstream license texts harvested
+from fetched payloads during release assembly.
+

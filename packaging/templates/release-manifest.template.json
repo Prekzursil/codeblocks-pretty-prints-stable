@@ -1,0 +1,40 @@
+{
+  "product": "Code::Blocks Stable Toolchain Edition",
+  "repo": "Prekzursil/codeblocks-pretty-prints-stable",
+  "edition": "Code::Blocks Stable Toolchain Edition",
+  "version": "0.1.0",
+  "host_support": {
+    "windows": "10/11 x64",
+    "host_architecture": "x64",
+    "target_builds": ["win32", "x64"]
+  },
+  "upstream": {
+    "codeblocks": {
+      "source_url": "",
+      "version": "",
+      "sha256": ""
+    },
+    "toolchain": {
+      "source_url": "",
+      "gcc_version": "",
+      "gdb_version": "",
+      "sha256": ""
+    }
+  },
+  "staging": {
+    "payload_root": "dist/payload/CodeBlocks",
+    "release_assets_root": "dist/release-assets",
+    "profile_seed_root": "overlay/profile-seed"
+  },
+  "notices": {
+    "bundle_path": "dist/release-assets/THIRD_PARTY_NOTICES.md"
+  },
+  "outputs": {
+    "installer": "dist/installer/codeblocks-pretty-prints-stable-setup.exe",
+    "hashes": "dist/release-assets/SHA256SUMS.txt",
+    "manifest": "dist/release-assets/release-manifest.json",
+    "sbom": "dist/release-assets/sbom.json"
+  }
+}
+
+

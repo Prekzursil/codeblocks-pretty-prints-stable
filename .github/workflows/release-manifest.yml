@@ -48,4 +48,3 @@ jobs:
           if ($text -notmatch 'Code::Blocks') { throw 'Notice policy must mention Code::Blocks.' }
           if ($text -notmatch 'MinGW-w64') { throw 'Notice policy must mention the MinGW-w64 family.' }
           if ($text -notmatch 'Python') { throw 'Notice policy must mention Python runtime notices.' }
-

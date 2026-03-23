@@ -1,0 +1,12 @@
+{
+  "name": "codeblocks-pretty-prints-stable",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify:dashboards": "node scripts/provider_ui/verify_dashboards.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0"
+  }
+}
+
