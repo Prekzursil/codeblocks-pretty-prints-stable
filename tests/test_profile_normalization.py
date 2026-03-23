@@ -7,47 +7,13 @@ from scripts.codeblocks_stable import (
     normalize_codesnippets_ini,
     normalize_profile_bundle,
 )
+from tests.support import base_manifest
 
 
 class ProfileNormalizationTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.manifest = {
-            "schema_version": 1,
-            "repo_name": "codeblocks-pretty-prints-stable",
-            "edition_name": "Code::Blocks Stable Toolchain Edition",
-            "product_name": "Code::Blocks",
-            "install_scope": "machine-wide",
-            "host_architecture": "x64",
-            "target_architectures": ["x86", "x64"],
-            "current_official_install_root": r"C:\Program Files\CodeBlocks",
-            "edition_install_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition",
-            "current_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks",
-            "managed_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
-            "toolchain_relative_root": "MinGW",
-            "toolchain_python_relative_root": r"share\gcc-14.2.0\python",
-            "bundled_toolchain": {
-                "gcc_version": "14.2.0",
-                "gdb_version": "16.2",
-                "family": "mingw-w64-ucrt-posix-seh",
-            },
-            "profile_sources": [
-                "default.conf",
-                "default.cbKeyBinder20.conf",
-                "codesnippets.ini",
-            ],
-            "profile_outputs": [
-                "default.conf",
-                "default.cbKeyBinder20.conf",
-                "codesnippets.ini",
-            ],
-            "notice_name_patterns": ["LICENSE*", "gdbinit"],
-            "profile_rewrites": {
-                "debugger_executable": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\bin\gdb.exe",
-                "debugger_python_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-14.2.0\python",
-                "toolchain_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW",
-                "profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
-            },
-        }
+        self.manifest = base_manifest()
+        self.manifest["notice_name_patterns"] = ["LICENSE*", "gdbinit"]
 
     def test_default_conf_rewrites_install_root_and_debugger_paths(self) -> None:
         text = r"""\

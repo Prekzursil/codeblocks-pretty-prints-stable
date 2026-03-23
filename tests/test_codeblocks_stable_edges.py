@@ -22,50 +22,7 @@ from scripts.codeblocks_stable import (
     validate_payload_manifest,
     validate_release_inputs,
 )
-
-
-def _base_manifest() -> dict[str, object]:
-    return {
-        "schema_version": 1,
-        "repo_name": "codeblocks-pretty-prints-stable",
-        "edition_name": "Code::Blocks Stable Toolchain Edition",
-        "product_name": "Code::Blocks",
-        "install_scope": "machine-wide",
-        "host_architecture": "x64",
-        "target_architectures": ["x86", "x64"],
-        "current_official_install_root": r"C:\Program Files\CodeBlocks",
-        "edition_install_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition",
-        "current_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks",
-        "managed_profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
-        "toolchain_relative_root": "MinGW",
-        "toolchain_python_relative_root": r"share\gcc-14.2.0\python",
-        "bundled_toolchain": {
-            "gcc_version": "14.2.0",
-            "gdb_version": "16.2",
-            "family": "mingw-w64-ucrt-posix-seh",
-        },
-        "profile_sources": [
-            "default.conf",
-            "default.cbKeyBinder20.conf",
-            "codesnippets.ini",
-        ],
-        "profile_outputs": [
-            "default.conf",
-            "default.cbKeyBinder20.conf",
-            "codesnippets.ini",
-        ],
-        "notice_name_patterns": [
-            "LICENSE*",
-            "gdbinit",
-            "*.gdb.py",
-        ],
-        "profile_rewrites": {
-            "debugger_executable": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\bin\gdb.exe",
-            "debugger_python_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-14.2.0\python",
-            "toolchain_root": r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW",
-            "profile_root": r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition",
-        },
-    }
+from tests.support import base_manifest, write_materialized_profile_seed, write_release_input_skeleton
 
 
 class CodeblocksStableEdgeTests(unittest.TestCase):
@@ -99,14 +56,14 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
         ]
         for key, replacement, expected in invalid_cases:
             with self.subTest(key=key):
-                manifest = _base_manifest()
+                manifest = base_manifest()
                 manifest[key] = replacement
                 with self.assertRaisesRegex(ValueError, expected):
                     validate_payload_manifest(manifest)
 
         for key in ("gcc_version", "gdb_version", "family"):
             with self.subTest(toolchain_key=key):
-                manifest = _base_manifest()
+                manifest = base_manifest()
                 manifest["bundled_toolchain"][key] = ""
                 with self.assertRaisesRegex(ValueError, key):
                     validate_payload_manifest(manifest)
@@ -118,7 +75,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             "profile_root",
         ):
             with self.subTest(profile_key=key):
-                manifest = _base_manifest()
+                manifest = base_manifest()
                 manifest["profile_rewrites"][key] = ""
                 with self.assertRaisesRegex(ValueError, key):
                     validate_payload_manifest(manifest)
@@ -130,7 +87,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                     "default.conf": "x",
                     "default.cbKeyBinder20.conf": "{}",
                 },
-                _base_manifest(),
+                base_manifest(),
             )
 
     def test_build_managed_profile_reads_source_files(self) -> None:
@@ -142,7 +99,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
                 encoding="utf-8",
             )
-            bundle = build_managed_profile(root, _base_manifest())
+            bundle = build_managed_profile(root, base_manifest())
             self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["default.conf"])
             self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["codesnippets.ini"])
 
@@ -187,13 +144,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
     def test_validate_release_inputs_rejects_bad_repo_shapes(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             repo = Path(tempdir)
-            (repo / "manifests").mkdir()
-            (repo / "overlay").mkdir()
-
-            (repo / "manifests" / "codeblocks_stable_toolchain.json").write_text(
-                json.dumps(_base_manifest()),
-                encoding="utf-8",
-            )
+            write_release_input_skeleton(repo, manifest=base_manifest())
 
             bad_notice = {
                 "schema_version": 2,
@@ -225,14 +176,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 json.dumps(bad_notice),
                 encoding="utf-8",
             )
-            profile_seed_root = repo / "overlay" / "profile-seed"
-            profile_seed_root.mkdir()
-            for name in _base_manifest()["profile_outputs"]:
-                (profile_seed_root / name).write_text("seed", encoding="utf-8")
-            (repo / "overlay" / "profile-replacements.json").write_text(
-                json.dumps({"schema_version": 1, "replacements": []}),
-                encoding="utf-8",
-            )
+            write_materialized_profile_seed(repo)
             (repo / "overlay" / "profile_seed.json").write_text(
                 json.dumps({"schema_version": 2, "seed_name": "seed", "debugger_init_commands": ["x"]}),
                 encoding="utf-8",
@@ -267,7 +211,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             )
 
             manifest_path = repo / "manifest.json"
-            manifest_path.write_text(json.dumps(_base_manifest()), encoding="utf-8")
+            manifest_path.write_text(json.dumps(base_manifest()), encoding="utf-8")
 
             out_dir = repo / "managed"
             rc = _cmd_normalize_profile(
