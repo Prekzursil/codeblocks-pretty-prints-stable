@@ -2,9 +2,11 @@
   "project": {
     "name": "Code::Blocks Stable Toolchain Edition",
     "repo": "codeblocks-pretty-prints-stable",
+    "version": "v0.1.0",
     "distribution_model": "fetch-and-package",
     "install_scope": "machine-wide",
-    "edition_path": "C:\\Program Files\\CodeBlocks Stable Toolchain Edition"
+    "edition_path": "C:\\Program Files\\CodeBlocks Stable Toolchain Edition",
+    "baseline_source": "local-known-good-install"
   },
   "baseline": {
     "official_codeblocks_version": "25.03",
@@ -53,5 +55,5 @@
       "Coverage 100"
     ]
   },
-  "status": "draft-baseline"
+  "status": "release-ready-local-baseline"
 }

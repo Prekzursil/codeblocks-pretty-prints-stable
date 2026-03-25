@@ -89,6 +89,8 @@ class PackagingContractTests(unittest.TestCase):
 
     def test_installer_script_uses_safe_delete_guard(self) -> None:
         script = (Path(__file__).resolve().parents[1] / "packaging" / "CodeBlocksStableToolchainEdition.iss").read_text(encoding="utf-8")
+        self.assertIn("AppId={{{#AppIdGuid}}}", script)
+        self.assertIn("OutputBaseFilename=codeblocks-pretty-prints-stable-{#AppVersion}-setup", script)
         self.assertIn("function CanSafelyRemoveLegacyInstall", script)
         self.assertIn("CanSafelyRemoveLegacyInstall(DetectedLegacyInstallPath, ExpandConstant('{app}'))", script)
         self.assertIn(

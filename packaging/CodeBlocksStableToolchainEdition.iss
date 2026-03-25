@@ -1,5 +1,7 @@
 #define AppName "Code::Blocks Stable Toolchain Edition"
-#define AppVersion "0.1.0"
+#ifndef AppVersion
+  #define AppVersion "0.1.0"
+#endif
 #define AppPublisher "Prekzursil"
 #define AppURL "https://github.com/Prekzursil/codeblocks-pretty-prints-stable"
 #define AppIdGuid "B1B93FD8-5B7B-4A2A-93DB-4A6D5F5D8B15"
@@ -12,7 +14,7 @@
 #define RuntimeOverlayRoot "{tmp}\CodeBlocksStableToolchainEdition\Overlay"
 
 [Setup]
-AppId={{#AppIdGuid}}
+AppId={{{#AppIdGuid}}}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
@@ -27,7 +29,7 @@ AllowNoIcons=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin
-OutputBaseFilename=codeblocks-pretty-prints-stable-setup
+OutputBaseFilename=codeblocks-pretty-prints-stable-{#AppVersion}-setup
 OutputDir=..\dist\installer
 Compression=lzma2/ultra64
 SolidCompression=yes

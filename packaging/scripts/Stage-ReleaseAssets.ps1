@@ -13,7 +13,9 @@ param(
     [string]$OutputRoot,
 
     [string]$SbomPath,
-    [string]$AttestationPath
+    [string]$AttestationPath,
+    [string]$ReleaseNotesPath,
+    [string]$NoticeDirectory
 )
 
 $ErrorActionPreference = 'Stop'
@@ -63,10 +65,22 @@ if ($AttestationPath) {
     }
 }
 
-$hashes = Get-ChildItem -LiteralPath $OutputRoot -File | Sort-Object Name | ForEach-Object {
+if ($ReleaseNotesPath) {
+    if (Test-Path -LiteralPath $ReleaseNotesPath) {
+        Copy-Item -LiteralPath $ReleaseNotesPath -Destination (Join-Path $OutputRoot (Split-Path -Leaf $ReleaseNotesPath)) -Force
+    }
+}
+
+if ($NoticeDirectory) {
+    if (Test-Path -LiteralPath $NoticeDirectory) {
+        Copy-Item -LiteralPath $NoticeDirectory -Destination (Join-Path $OutputRoot 'notices') -Recurse -Force
+    }
+}
+
+$hashes = Get-ChildItem -LiteralPath $OutputRoot -Recurse -File | Sort-Object FullName | ForEach-Object {
     $hash = Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256
     [pscustomobject]@{
-        file = $_.Name
+        file = $_.FullName.Substring($OutputRoot.Length).TrimStart('\', '/').Replace('\', '/')
         sha256 = $hash.Hash.ToLowerInvariant()
     }
 }
@@ -79,5 +93,4 @@ $lines = foreach ($item in $hashes) {
 $lines | Set-Content -LiteralPath (Join-Path $OutputRoot 'SHA256SUMS.txt') -Encoding ASCII
 
 Write-Host "Staged release assets to $OutputRoot"
-
 

@@ -11,6 +11,11 @@ The repo is intentionally organized as a **fetch-and-package** control plane:
 - a machine-wide Inno Setup installer is produced from the staged assets
 - public releases are gated by verification and notice completeness
 
+For the first public release (`v0.1.0`), the staged payload is built from the
+**known-good local Code::Blocks install** that already has the debugger and
+pretty-printer chain working correctly, so the installer mirrors the user’s
+actual plug-and-play baseline.
+
 ## Expected inputs from other repo lanes
 
 This packaging layer expects other tasks/layers to provide build output in
@@ -39,4 +44,5 @@ The installer workflow should ultimately produce:
 - `scripts/` — helper scripts used by the installer and release staging
 - `templates/` — placeholders for release manifests, notices, and profile seed structure
 
+See `..\docs\RELEASING.md` for the local mirror release flow.
 

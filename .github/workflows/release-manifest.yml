@@ -31,6 +31,12 @@ jobs:
           if ($manifest.project.name -ne 'Code::Blocks Stable Toolchain Edition') {
             throw 'Manifest project name mismatch.'
           }
+          if ($manifest.project.version -ne 'v0.1.0') {
+            throw 'Manifest project version mismatch.'
+          }
+          if ($manifest.project.baseline_source -ne 'local-known-good-install') {
+            throw 'Manifest baseline source must match the known-good local install release process.'
+          }
           if ($manifest.baseline.official_codeblocks_version -ne '25.03') {
             throw 'Manifest must seed the known local baseline version.'
           }
