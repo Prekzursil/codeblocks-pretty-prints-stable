@@ -1,2 +1,2 @@
-coverage==7.8.0
+coverage==7.13.5
 defusedxml==0.7.1
