@@ -17,6 +17,9 @@ DEV_ONLY_GDB_SOURCE = r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-
 PATCHED_GDB_COMMENT = "# dev-only stl-views source removed; managed pretty-printers are configured in the seeded profile"
 PATCHED_GDB_PATH = Path("share") / "CodeBlocks" / "scripts" / "gdb_init.gdb"
 LOCAL_PAYLOAD_KIND = "local-known-good-install"
+THIRD_PARTY_NOTICES_NAME = "THIRD_PARTY_NOTICES.md"
+SBOM_NAME = "sbom.json"
+PROVENANCE_NAME = "provenance.json"
 
 
 def sanitize_gdb_init(text: str) -> str:
@@ -108,8 +111,8 @@ def build_release_manifest(
         "outputs": {
             "installer": f"codeblocks-pretty-prints-stable-{version}-setup.exe",
             "checksums": "SHA256SUMS.txt",
-            "sbom": "sbom.json",
-            "provenance": "provenance.json",
+            "sbom": SBOM_NAME,
+            "provenance": PROVENANCE_NAME,
             "release_notes": f"RELEASE_NOTES_{version}.md",
         },
     }
@@ -207,7 +210,7 @@ def compose_notice_policy(
     harvested_paths: Sequence[str],
     version: str,
 ) -> str:
-    policy = (repo_root / "THIRD_PARTY_NOTICES.md").read_text(encoding="utf-8").rstrip()
+    policy = (repo_root / THIRD_PARTY_NOTICES_NAME).read_text(encoding="utf-8").rstrip()
     lines = [
         policy,
         "",
@@ -257,7 +260,7 @@ def prepare_local_release(
     (release_assets_root / release_notes_name).write_text(release_notes, encoding="utf-8")
 
     notice_text = compose_notice_policy(repo_root=repo, harvested_paths=harvested_paths, version=version)
-    (release_assets_root / "THIRD_PARTY_NOTICES.md").write_text(notice_text, encoding="utf-8")
+    (release_assets_root / THIRD_PARTY_NOTICES_NAME).write_text(notice_text, encoding="utf-8")
 
     release_manifest = build_release_manifest(
         version=version,
@@ -271,14 +274,14 @@ def prepare_local_release(
     )
 
     sbom = build_sbom(version=version, payload_manifest=payload_manifest, source_payload_sha256=source_sha)
-    (release_assets_root / "sbom.json").write_text(json.dumps(sbom, indent=2) + "\n", encoding="utf-8")
+    (release_assets_root / SBOM_NAME).write_text(json.dumps(sbom, indent=2) + "\n", encoding="utf-8")
 
     provenance = build_provenance(
         version=version,
         source_install_root=source_root,
         source_payload_sha256=source_sha,
     )
-    (release_assets_root / "provenance.json").write_text(
+    (release_assets_root / PROVENANCE_NAME).write_text(
         json.dumps(provenance, indent=2) + "\n",
         encoding="utf-8",
     )
@@ -288,10 +291,10 @@ def prepare_local_release(
         "payload_root": str(payload_root),
         "release_assets_root": str(release_assets_root),
         "release_notes_path": str(release_assets_root / release_notes_name),
-        "notices_path": str(release_assets_root / "THIRD_PARTY_NOTICES.md"),
+        "notices_path": str(release_assets_root / THIRD_PARTY_NOTICES_NAME),
         "manifest_path": str(release_assets_root / "release-manifest.json"),
-        "sbom_path": str(release_assets_root / "sbom.json"),
-        "provenance_path": str(release_assets_root / "provenance.json"),
+        "sbom_path": str(release_assets_root / SBOM_NAME),
+        "provenance_path": str(release_assets_root / PROVENANCE_NAME),
         "patched_dev_gdb_init": patched,
         "harvested_notice_count": len(harvested_paths),
     }
