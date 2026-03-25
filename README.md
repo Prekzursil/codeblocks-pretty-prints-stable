@@ -8,6 +8,10 @@ This repository is intentionally a **fetch-and-package** project:
 - it stores the release metadata, manifests, docs, notices, and installer/governance wiring
 - it produces a curated Windows installer that points Code::Blocks at the right compiler, linker, debugger, and pretty-printer chain by **absolute path**
 
+For the first public release line, the packaged baseline is intentionally staged from the
+**known-good local Code::Blocks install** that already has the desired debugger and pretty-printer
+behavior working correctly.
+
 ## What this project is
 
 - A public repo for the **Code::Blocks Stable Toolchain Edition** release pipeline
@@ -61,12 +65,14 @@ This repo is intentionally small at the source level:
 
 The release pipeline is expected to:
 
-1. fetch pinned upstream payloads
+1. stage the known-good local Code::Blocks baseline payload
 2. verify hashes
 3. harvest and bundle notices
 4. apply the curated overlay
 5. build the Windows installer
 6. publish checksums, SBOM, and provenance/attestation artifacts
+
+See `docs/RELEASING.md` for the local mirror release flow used by `v0.1.0`.
 
 Public binary releases are gated. The repository itself may be public immediately, but release artifacts should not be published until the release workflow and verification checks are complete.
 

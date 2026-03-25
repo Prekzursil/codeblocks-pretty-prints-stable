@@ -8,6 +8,10 @@ on:
     types: [completed]
   workflow_dispatch:
 
+concurrency:
+  group: quality-zero-remediation-${{ github.repository }}-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   remediate:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
@@ -21,4 +25,3 @@ jobs:
       sha: ${{ github.event.workflow_run.head_sha || github.sha }}
     secrets:
       CODEX_AUTH_JSON: ${{ secrets.CODEX_AUTH_JSON }}
-
