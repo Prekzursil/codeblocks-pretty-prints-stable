@@ -3,16 +3,8 @@ name: Release Manifest Validation
 on:
   push:
     branches: [main]
-    paths:
-      - 'release-manifest.json'
-      - 'THIRD_PARTY_NOTICES.md'
-      - '.github/workflows/release-manifest.yml'
   pull_request:
     branches: [main]
-    paths:
-      - 'release-manifest.json'
-      - 'THIRD_PARTY_NOTICES.md'
-      - '.github/workflows/release-manifest.yml'
   workflow_dispatch:
 
 permissions:
