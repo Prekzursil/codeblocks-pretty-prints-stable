@@ -8,17 +8,13 @@ on:
     types: [completed]
   workflow_dispatch:
 
-concurrency:
-  group: quality-zero-remediation-${{ github.repository }}-${{ github.event.workflow_run.head_sha || github.sha }}
-  cancel-in-progress: true
-
 jobs:
   remediate:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure'
     permissions:
       contents: write
       pull-requests: write
-    uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-remediation-loop.yml@139144c8a17e93ba617c6b44e8f71e76a9deca3f
+    uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-remediation-loop.yml@7268fee30f1cf796938d97fe460259f27386a8cd
     with:
       repo_slug: ${{ github.repository }}
       failure_context: Quality Zero Gate
