@@ -1,48 +1,33 @@
 # Security Policy
 
-## Supported versions
+## Supported Versions
 
-This repository governs the **Code::Blocks Stable Toolchain Edition** release line for the current public packaging baseline.
+Security fixes are applied to the `main` branch.
 
-## Reporting a vulnerability
+| Version | Supported |
+| --- | --- |
+| `main` | :white_check_mark: |
+| Other branches/tags | :x: |
 
-Please **do not** open a public issue for:
+## Reporting a Vulnerability
 
-- secrets or credentials accidentally exposed in the repo or release artifacts
-- a packaging flow that could disclose private paths, tokens, or machine data
-- a release artifact integrity problem
-- any issue that could impact redistribution notices or the trusted release chain
+Please do **not** open public GitHub issues for undisclosed security findings.
 
-Use GitHub’s private vulnerability reporting flow for this repository whenever possible.
+Use GitHub Private Vulnerability Reporting for this repository:
+<https://github.com/Prekzursil/codeblocks-pretty-prints-stable/security/advisories/new>
 
-If GitHub private reporting is unavailable, contact the repository owner privately through GitHub rather than posting the report publicly.
+If private advisory reporting is unavailable, contact the maintainer privately on GitHub (`@Prekzursil`).
 
-## What counts as security-sensitive here
+When reporting, include:
 
-Examples include:
+- the affected component, file, workflow, or dependency
+- the exact commit, branch, or release if known
+- clear reproduction or proof-of-concept steps
+- impact details covering confidentiality, integrity, or availability
+- any suggested mitigation if known
 
-- leaked tokens in workflow files or release metadata
-- release scripts that could publish unverified payloads
-- notice-generation bugs that could mislabel a redistributed component
-- installer cleanup logic that could delete unrelated third-party toolchains
-- tampering with checksums, manifests, or provenance artifacts
+## Disclosure Expectations
 
-## What we will do
-
-When a security report is received, we will:
-
-1. acknowledge receipt privately
-2. reproduce the issue on a controlled branch
-3. patch the problem in the release/control-plane layer
-4. verify the fix with evidence before release
-
-## Safe reporting details
-
-Include:
-
-- the affected file or release artifact
-- the exact version or commit if known
-- the observed impact
-- whether the issue is in docs, installer logic, manifests, or GitHub workflow wiring
-
-Avoid sending secrets, customer identifiers, or private credentials in the initial report. If such data is involved, redact it before sending.
+- Initial acknowledgment: best effort within 3 business days.
+- Triage update: best effort within 7 business days.
+- Coordinated disclosure is expected; please allow time to investigate and patch before public disclosure.
