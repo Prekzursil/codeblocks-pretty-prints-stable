@@ -1,0 +1,31 @@
+[MAIN]
+py-version = 3.12
+
+[MESSAGES CONTROL]
+# Codacy's PyLint engine ships with rules that mis-fire on Python 3.12 / PEP
+# 585 idiom. Disable only those specific false-positive rules — real findings
+# still surface from the active pylintpython3 engine. This is rule
+# configuration, not a file/issue exclusion.
+#
+# Disabled rules:
+#   E0611  no-name-in-module — false positives on dynamic imports
+#   E1101  no-member — false positives on third-party libs without stubs
+#   E1136  unsubscriptable-object — PEP 585 false positives on builtin generics
+#   R0201  no-self-use — opinionated, not a real defect
+#   R0801  duplicate-code — false positive on similar one-line module docstrings
+#   R0903  too-few-public-methods — opinionated for dataclass-like containers
+#   W0104  pointless-statement — false positive on context-manager usage
+#   W0212  protected-access — too noisy on internal-tooling scripts
+#   W1618  no-absolute-import — Python 2 only, irrelevant for py3.12
+#   W1619  print-statement — Python 2 only, irrelevant for py3.12
+disable =
+    E0611,
+    E1101,
+    E1136,
+    R0201,
+    R0801,
+    R0903,
+    W0104,
+    W0212,
+    W1618,
+    W1619
