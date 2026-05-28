@@ -1,12 +1,27 @@
 """Shared helpers for loading, writing, and validating manifest data."""
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import json
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
+
+
+def dispatch_cli(
+    parser: argparse.ArgumentParser, argv: Sequence[str] | None
+) -> int:
+    """Parse ``argv`` with ``parser`` and dispatch to the chosen subcommand.
+
+    Each subcommand registered on ``parser`` is expected to set a ``func``
+    default that accepts the parsed namespace and returns an exit code. The
+    shared logic lives here so the script entrypoints do not duplicate the
+    parse-and-dispatch sequence.
+    """
+    args = parser.parse_args(list(argv) if argv is not None else None)
+    return int(args.func(args))
 
 
 @dataclasses.dataclass(frozen=True)

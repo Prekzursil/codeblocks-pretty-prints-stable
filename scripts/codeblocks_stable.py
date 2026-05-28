@@ -138,6 +138,12 @@ def _cmd_materialize_profile_seed(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the fetch-and-package CLI parser with all manifest subcommands.
+
+    Registers the ``validate-manifest``, ``normalize-profile``,
+    ``materialize-profile-seed`` and ``inventory-notices`` subcommands, each
+    wired to its handler via ``set_defaults(func=...)``.
+    """
     parser = argparse.ArgumentParser(
         description=(
             "Fetch-and-package helpers for Code::Blocks Stable Toolchain Edition."
@@ -182,8 +188,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv`` and dispatch to the selected subcommand."""
-    args = _build_parser().parse_args(list(argv) if argv is not None else None)
-    return int(args.func(args))
+    return codeblocks_shared.dispatch_cli(_build_parser(), argv)
 
 
 if __name__ == "__main__":

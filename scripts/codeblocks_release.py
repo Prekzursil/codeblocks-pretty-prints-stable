@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.codeblocks_notices import collect_notice_inventory
-from scripts.codeblocks_shared import load_json_document
+from scripts.codeblocks_shared import dispatch_cli, load_json_document
 from scripts.codeblocks_validation import load_manifest
 
 DEV_ONLY_GDB_SOURCE = (
@@ -382,6 +382,11 @@ def _cmd_prepare_local_release(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the release CLI parser with the ``prepare-local-release`` command.
+
+    The returned parser exposes a single subcommand that stages a known-good
+    local Code::Blocks install into the dist payload and release-asset outputs.
+    """
     parser = argparse.ArgumentParser(
         description=(
             "Release-preparation helpers for Code::Blocks Stable "
@@ -407,8 +412,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Parse ``argv`` and dispatch to the selected subcommand."""
-    args = _build_parser().parse_args(list(argv) if argv is not None else None)
-    return int(args.func(args))
+    return dispatch_cli(_build_parser(), argv)
 
 
 if __name__ == "__main__":

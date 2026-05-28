@@ -7,8 +7,10 @@ import io
 import json
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
+from scripts.codeblocks_shared import dispatch_cli
 from scripts.codeblocks_stable import (
     NoticeEntry,
     _case_insensitive_replace,
@@ -333,6 +335,26 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                         "-",
                     ]
                 )
+
+    def test_dispatch_cli_parses_and_invokes_selected_handler(self) -> None:
+        """``dispatch_cli`` parses argv and returns the handler's exit code."""
+        parser = argparse.ArgumentParser()
+        sub = parser.add_subparsers(dest="command", required=True)
+        run = sub.add_parser("run")
+        run.add_argument("--code", type=int, default=0)
+        run.set_defaults(func=lambda args: args.code)
+
+        self.assertEqual(dispatch_cli(parser, ["run", "--code", "7"]), 7)
+
+    def test_dispatch_cli_reads_process_argv_when_none(self) -> None:
+        """``dispatch_cli`` falls back to ``sys.argv`` when ``argv`` is None."""
+        parser = argparse.ArgumentParser()
+        sub = parser.add_subparsers(dest="command", required=True)
+        run = sub.add_parser("run")
+        run.set_defaults(func=lambda _args: 0)
+
+        with unittest.mock.patch("sys.argv", ["prog", "run"]):
+            self.assertEqual(dispatch_cli(parser, None), 0)
 
 
 if __name__ == "__main__":
