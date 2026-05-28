@@ -1,3 +1,4 @@
+"""Edge-case tests for the ``codeblocks_stable`` CLI facade."""
 from __future__ import annotations
 
 import argparse
@@ -22,11 +23,18 @@ from scripts.codeblocks_stable import (
     validate_payload_manifest,
     validate_release_inputs,
 )
-from tests.support import base_manifest, write_materialized_profile_seed, write_release_input_skeleton
+from tests.support import (
+    base_manifest,
+    write_materialized_profile_seed,
+    write_release_input_skeleton,
+)
 
 
 class CodeblocksStableEdgeTests(unittest.TestCase):
+    """Exercise validation, normalization, and CLI error paths."""
+
     def test_load_json_document_rejects_non_object(self) -> None:
+        """A JSON array is rejected as a non-object document."""
         with tempfile.TemporaryDirectory() as tempdir:
             path = Path(tempdir) / "bad.json"
             path.write_text("[]", encoding="utf-8")
@@ -34,12 +42,18 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 load_json_document(path)
 
     def test_case_insensitive_replace_replaces_case_insensitively(self) -> None:
+        """Replacement matches the source path regardless of case."""
         self.assertEqual(
-            _case_insensitive_replace(r"C:\Program Files\CodeBlocks", r"c:\program files\codeblocks", r"C:\Stable"),
+            _case_insensitive_replace(
+                r"C:\Program Files\CodeBlocks",
+                r"c:\program files\codeblocks",
+                r"C:\Stable",
+            ),
             r"C:\Stable",
         )
 
     def test_validate_payload_manifest_rejects_invalid_fields(self) -> None:
+        """Every invalid manifest field raises a descriptive error."""
         invalid_cases = [
             ("schema_version", 2, "schema_version"),
             ("repo_name", "", "repo_name"),
@@ -81,6 +95,7 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                     validate_payload_manifest(manifest)
 
     def test_normalize_profile_bundle_rejects_missing_file(self) -> None:
+        """A bundle missing a required source file is rejected."""
         with self.assertRaisesRegex(ValueError, "profile bundle missing files"):
             normalize_profile_bundle(
                 {
@@ -91,26 +106,34 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             )
 
     def test_build_managed_profile_reads_source_files(self) -> None:
+        """Building a managed profile rewrites both source files."""
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            (root / "default.conf").write_text(r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8")
+            (root / "default.conf").write_text(
+                r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8"
+            )
             (root / "default.cbKeyBinder20.conf").write_text("{}", encoding="utf-8")
             (root / "codesnippets.ini").write_text(
-                r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
+                r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming"
+                r"\CodeBlocks\codesnippets.xml",
                 encoding="utf-8",
             )
             bundle = build_managed_profile(root, base_manifest())
-            self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["default.conf"])
-            self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["codesnippets.ini"])
+            edition = "CodeBlocks Stable Toolchain Edition"
+            self.assertIn(edition, bundle["default.conf"])
+            self.assertIn(edition, bundle["codesnippets.ini"])
 
-    def test_notice_category_detection_prefers_custom_categories_then_defaults(self) -> None:
+    def test_notice_category_detection_prefers_custom_then_defaults(self) -> None:
+        """Custom categories win over default-pattern categories."""
         categories = {"docs": ["README*"], "runtime": ["*gdb.py"]}
         self.assertEqual(
             _notice_category_from_name("README-notes.txt", categories, ["LICENSE*"]),
             "docs",
         )
         self.assertEqual(
-            _notice_category_from_name("libstdc++.dll.a-gdb.py", categories, ["*.gdb.py"]),
+            _notice_category_from_name(
+                "libstdc++.dll.a-gdb.py", categories, ["*.gdb.py"]
+            ),
             "runtime",
         )
         self.assertEqual(
@@ -123,7 +146,8 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
         )
         self.assertIsNone(_notice_category_from_name("notes.txt", {}, ["LICENSE*"]))
 
-    def test_collect_notice_inventory_handles_empty_and_invalid_category_manifest(self) -> None:
+    def test_collect_notice_inventory_handles_empty_and_invalid(self) -> None:
+        """An empty tree yields nothing; a bad categories type raises."""
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             self.assertEqual(collect_notice_inventory(root), [])
@@ -135,13 +159,17 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "categories"):
                 collect_notice_inventory(root, manifest)
 
-    def test_render_notice_inventory_handles_empty_and_populated_inputs(self) -> None:
+    def test_render_notice_inventory_handles_empty_and_populated(self) -> None:
+        """Rendering handles both empty and populated inventories."""
         self.assertIn("- None found", _render_notice_inventory([]))
-        rendered = _render_notice_inventory([NoticeEntry(path="LICENSE.txt", category="license")])
+        rendered = _render_notice_inventory(
+            [NoticeEntry(path="LICENSE.txt", category="license")]
+        )
         self.assertIn("LICENSE.txt", rendered)
         self.assertIn("license", rendered)
 
     def test_validate_release_inputs_rejects_bad_repo_shapes(self) -> None:
+        """Each malformed release input raises its specific error."""
         with tempfile.TemporaryDirectory() as tempdir:
             repo = Path(tempdir)
             write_release_input_skeleton(repo, manifest=base_manifest())
@@ -155,8 +183,13 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 json.dumps(bad_notice),
                 encoding="utf-8",
             )
+            valid_seed = {
+                "schema_version": 1,
+                "seed_name": "seed",
+                "debugger_init_commands": ["x"],
+            }
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps(valid_seed),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "notice_inventory schema_version"):
@@ -178,35 +211,43 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             )
             write_materialized_profile_seed(repo)
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 2, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps({**valid_seed, "schema_version": 2}),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "overlay profile_seed schema_version"):
+            with self.assertRaisesRegex(
+                ValueError, "overlay profile_seed schema_version"
+            ):
                 validate_release_inputs(repo)
 
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": []}),
+                json.dumps({**valid_seed, "debugger_init_commands": []}),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "debugger_init_commands"):
                 validate_release_inputs(repo)
 
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps(valid_seed),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "notice inventory is empty"):
                 validate_release_inputs(repo)
 
     def test_command_handlers_and_main_paths(self) -> None:
+        """The CLI handlers and ``main`` cover success and error paths."""
         with tempfile.TemporaryDirectory() as tempdir:
             repo = Path(tempdir)
             profile = repo / "profile"
             profile.mkdir(parents=True)
-            (profile / "default.conf").write_text(r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8")
-            (profile / "default.cbKeyBinder20.conf").write_text("{}", encoding="utf-8")
+            (profile / "default.conf").write_text(
+                r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8"
+            )
+            (profile / "default.cbKeyBinder20.conf").write_text(
+                "{}", encoding="utf-8"
+            )
             (profile / "codesnippets.ini").write_text(
-                r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
+                r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming"
+                r"\CodeBlocks\codesnippets.xml",
                 encoding="utf-8",
             )
 

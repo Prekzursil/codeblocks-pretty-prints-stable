@@ -1,3 +1,4 @@
+"""Shared fixtures and builders for the test suite."""
 from __future__ import annotations
 
 import json
@@ -20,6 +21,7 @@ TOOLCHAIN_PYTHON_ROOT = TOOLCHAIN_ROOT + r"\share\gcc-14.2.0\python"
 
 
 def base_manifest() -> dict[str, Any]:
+    """Return a valid baseline payload manifest for tests."""
     return {
         "schema_version": 1,
         "repo_name": "codeblocks-pretty-prints-stable",
@@ -56,13 +58,19 @@ def base_manifest() -> dict[str, Any]:
 
 
 def write_profile_bundle(root: Path, default_conf: str, codesnippets_ini: str) -> None:
+    """Write a minimal source profile bundle under ``root``."""
     root.mkdir(parents=True, exist_ok=True)
     (root / DEFAULT_CONF).write_text(default_conf, encoding="utf-8")
     (root / DEFAULT_KEYBINDINGS_CONF).write_text("{}", encoding="utf-8")
     (root / CODESNIPPETS_INI).write_text(codesnippets_ini, encoding="utf-8")
 
 
-def write_release_input_skeleton(repo: Path, *, manifest: dict[str, Any] | None = None) -> dict[str, Any]:
+def write_release_input_skeleton(
+    repo: Path,
+    *,
+    manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Write the manifest/notice skeleton needed for release validation."""
     payload_manifest = manifest or base_manifest()
     (repo / "manifests").mkdir(parents=True, exist_ok=True)
     (repo / "overlay").mkdir(parents=True, exist_ok=True)
@@ -85,6 +93,7 @@ def write_release_input_skeleton(repo: Path, *, manifest: dict[str, Any] | None 
 
 
 def write_materialized_profile_seed(repo: Path, *, content: str = "seed") -> None:
+    """Write a materialized profile seed and overlay contract."""
     profile_seed_root = repo / "overlay" / "profile-seed"
     profile_seed_root.mkdir(parents=True, exist_ok=True)
     for name in PROFILE_FILE_NAMES:

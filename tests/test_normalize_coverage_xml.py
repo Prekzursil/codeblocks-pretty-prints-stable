@@ -1,20 +1,29 @@
+"""Tests for Cobertura coverage-path normalization."""
 from __future__ import annotations
 
 import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.quality.normalize_coverage_xml import main, normalize_coverage_xml_paths
+from scripts.quality.normalize_coverage_xml import (
+    main,
+    normalize_coverage_xml_paths,
+)
 
 
 class NormalizeCoverageXmlTests(unittest.TestCase):
-    def test_normalize_coverage_xml_paths_prefixes_repo_relative_script_paths(self) -> None:
+    """Validate filename rewriting and the CLI entrypoint."""
+
+    def test_normalize_paths_prefixes_repo_relative_script_paths(self) -> None:
+        """Bare and quality-rooted filenames are prefixed with scripts/."""
         with tempfile.TemporaryDirectory() as tempdir:
             coverage_xml = Path(tempdir) / 'coverage.xml'
             coverage_xml.write_text(
                 '<coverage><packages><package name="scripts"><classes>'
-                '<class name="codeblocks_stable.py" filename="codeblocks_stable.py" />'
-                '<class name="validate_release_inputs.py" filename="quality/validate_release_inputs.py" />'
+                '<class name="codeblocks_stable.py" '
+                'filename="codeblocks_stable.py" />'
+                '<class name="validate_release_inputs.py" '
+                'filename="quality/validate_release_inputs.py" />'
                 '<class name="already.py" filename="scripts/already.py" />'
                 '</classes></package></packages></coverage>',
                 encoding='utf-8',
@@ -25,15 +34,19 @@ class NormalizeCoverageXmlTests(unittest.TestCase):
             payload = coverage_xml.read_text(encoding='utf-8')
             self.assertTrue(changed)
             self.assertIn('filename="scripts/codeblocks_stable.py"', payload)
-            self.assertIn('filename="scripts/quality/validate_release_inputs.py"', payload)
+            self.assertIn(
+                'filename="scripts/quality/validate_release_inputs.py"', payload
+            )
             self.assertIn('filename="scripts/already.py"', payload)
 
-    def test_normalize_coverage_xml_paths_is_noop_when_paths_are_already_repo_relative(self) -> None:
+    def test_normalize_paths_is_noop_when_already_repo_relative(self) -> None:
+        """No change is made when filenames are already scripts/-rooted."""
         with tempfile.TemporaryDirectory() as tempdir:
             coverage_xml = Path(tempdir) / 'coverage.xml'
             coverage_xml.write_text(
                 '<coverage><packages><package name="scripts"><classes>'
-                '<class name="codeblocks_stable.py" filename="scripts/codeblocks_stable.py" />'
+                '<class name="codeblocks_stable.py" '
+                'filename="scripts/codeblocks_stable.py" />'
                 '</classes></package></packages></coverage>',
                 encoding='utf-8',
             )
@@ -42,7 +55,8 @@ class NormalizeCoverageXmlTests(unittest.TestCase):
 
             self.assertFalse(changed)
 
-    def test_normalize_coverage_xml_paths_ignores_classes_without_filenames_and_main_runs(self) -> None:
+    def test_normalize_ignores_classes_without_filenames_and_main_runs(self) -> None:
+        """Classes without filenames are skipped and ``main`` succeeds."""
         with tempfile.TemporaryDirectory() as tempdir:
             coverage_xml = Path(tempdir) / 'coverage.xml'
             coverage_xml.write_text(

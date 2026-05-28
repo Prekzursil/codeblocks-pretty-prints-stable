@@ -1,3 +1,4 @@
+"""Tests for Code::Blocks profile and codesnippets normalization."""
 from __future__ import annotations
 
 import unittest
@@ -11,11 +12,15 @@ from tests.support import base_manifest
 
 
 class ProfileNormalizationTests(unittest.TestCase):
+    """Validate path rewrites for the managed profile bundle."""
+
     def setUp(self) -> None:
+        """Build a base manifest shared across the normalization tests."""
         self.manifest = base_manifest()
         self.manifest["notice_name_patterns"] = ["LICENSE*", "gdbinit"]
 
     def test_default_conf_rewrites_install_root_and_debugger_paths(self) -> None:
+        """Install-root and debugger paths are rewritten to the edition."""
         text = r"""\
 <gdb_debugger>
   <conf1>
@@ -53,7 +58,8 @@ end]]></str>
         )
         self.assertNotIn(r"C:\Program Files\CodeBlocks\MinGW", normalized)
 
-    def test_default_conf_rewrites_generic_mingw_root_and_custom_python_relative_path(self) -> None:
+    def test_default_conf_rewrites_generic_mingw_and_custom_python(self) -> None:
+        """Generic MinGW root and a custom python path are rewritten."""
         self.manifest["toolchain_python_relative_root"] = r"share\gcc-custom\python"
         self.manifest["profile_rewrites"]["debugger_python_root"] = (
             r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-custom\python"
@@ -87,6 +93,7 @@ end]]></str>
         self.assertNotIn(r"C:\MinGW", normalized)
 
     def test_codesnippets_ini_profile_root_is_normalized(self) -> None:
+        """The codesnippets file path is rewritten to the managed root."""
         text = r"""\
 ExternalEditor=
 SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml
@@ -94,7 +101,8 @@ SnippetFolder=
 """
         normalized = normalize_codesnippets_ini(text, self.manifest)
         expected = (
-            r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition\codesnippets.xml"
+            r"C:\Users\Prekzursil\AppData\Roaming"
+            r"\CodeBlocks Stable Toolchain Edition\codesnippets.xml"
         )
         self.assertIn(expected, normalized)
         self.assertNotIn(
@@ -103,13 +111,19 @@ SnippetFolder=
         )
 
     def test_profile_bundle_requires_expected_inputs(self) -> None:
+        """Normalizing a full bundle rewrites paths and preserves others."""
         bundle = {
             "default.conf": r"C:\Program Files\CodeBlocks\MinGW",
             "default.cbKeyBinder20.conf": "{}",
-            "codesnippets.ini": r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
+            "codesnippets.ini": (
+                r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming"
+                r"\CodeBlocks\codesnippets.xml"
+            ),
         }
         normalized = normalize_profile_bundle(bundle, self.manifest)
-        self.assertIn("CodeBlocks Stable Toolchain Edition", normalized["default.conf"])
+        self.assertIn(
+            "CodeBlocks Stable Toolchain Edition", normalized["default.conf"]
+        )
         self.assertEqual(normalized["default.cbKeyBinder20.conf"], "{}")
 
 

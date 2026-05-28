@@ -1,55 +1,71 @@
+"""Tests for redistributable notice-inventory collection."""
 from __future__ import annotations
 
-import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 from scripts.codeblocks_stable import collect_notice_inventory, load_json_document
+
+_NOTICE_MANIFEST = (
+    Path(__file__).resolve().parents[1] / "manifests" / "notice_inventory.json"
+)
 
 
 class NoticeInventoryTests(unittest.TestCase):
+    """Validate notice classification and ``.git`` exclusion."""
+
     def test_collect_notice_inventory_finds_expected_payload_files(self) -> None:
+        """Known license and runtime files are discovered and categorized."""
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
+            python_root = root / "MinGW" / "share" / "gcc-14.2.0" / "python"
             (root / "MinGW" / "lib" / "python3.9").mkdir(parents=True)
-            (root / "MinGW" / "share" / "gcc-14.2.0" / "python" / "libstdcxx" / "v6").mkdir(parents=True)
+            (python_root / "libstdcxx" / "v6").mkdir(parents=True)
             (root / "share" / "CodeBlocks" / "scripts").mkdir(parents=True)
 
             files = {
                 root / "MinGW" / "lib" / "python3.9" / "LICENSE.txt": "Python license",
                 root / "MinGW" / "lib" / "libstdc++.dll.a-gdb.py": "GPL bridge",
-                root / "MinGW" / "share" / "gcc-14.2.0" / "python" / "libstdcxx" / "v6" / "printers.py": "printers",
-                root / "share" / "CodeBlocks" / "scripts" / "stl-views-1.0.3.gdb": "stl views",
+                python_root / "libstdcxx" / "v6" / "printers.py": "printers",
+                root / "share" / "CodeBlocks" / "scripts" / "stl-views-1.0.3.gdb": "x",
                 root / "docs" / "manual.pdf": "not a notice",
             }
             for path, content in files.items():
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content, encoding="utf-8")
 
-            manifest = load_json_document(Path(__file__).resolve().parents[1] / "manifests" / "notice_inventory.json")
+            manifest = load_json_document(_NOTICE_MANIFEST)
             entries = collect_notice_inventory(root, manifest)
             paths = {entry.path for entry in entries}
             categories = {entry.path: entry.category for entry in entries}
 
             self.assertIn("MinGW/lib/python3.9/LICENSE.txt", paths)
             self.assertIn("MinGW/lib/libstdc++.dll.a-gdb.py", paths)
-            self.assertIn("MinGW/share/gcc-14.2.0/python/libstdcxx/v6/printers.py", paths)
+            self.assertIn(
+                "MinGW/share/gcc-14.2.0/python/libstdcxx/v6/printers.py", paths
+            )
             self.assertIn("share/CodeBlocks/scripts/stl-views-1.0.3.gdb", paths)
-            self.assertEqual(categories["MinGW/lib/python3.9/LICENSE.txt"], "license")
-            self.assertEqual(categories["MinGW/lib/libstdc++.dll.a-gdb.py"], "runtime_notice")
-            self.assertEqual(categories["share/CodeBlocks/scripts/stl-views-1.0.3.gdb"], "runtime_notice")
+            self.assertEqual(
+                categories["MinGW/lib/python3.9/LICENSE.txt"], "license"
+            )
+            self.assertEqual(
+                categories["MinGW/lib/libstdc++.dll.a-gdb.py"], "runtime_notice"
+            )
+            self.assertEqual(
+                categories["share/CodeBlocks/scripts/stl-views-1.0.3.gdb"],
+                "runtime_notice",
+            )
 
     def test_collect_notice_inventory_skips_git_directory(self) -> None:
+        """Notice files under ``.git`` are excluded from the inventory."""
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             (root / ".git").mkdir()
             (root / ".git" / "LICENSE.txt").write_text("ignored", encoding="utf-8")
             (root / "LICENSE.txt").write_text("included", encoding="utf-8")
 
-            manifest = load_json_document(Path(__file__).resolve().parents[1] / "manifests" / "notice_inventory.json")
+            manifest = load_json_document(_NOTICE_MANIFEST)
             entries = collect_notice_inventory(root, manifest)
             self.assertEqual([entry.path for entry in entries], ["LICENSE.txt"])
 
