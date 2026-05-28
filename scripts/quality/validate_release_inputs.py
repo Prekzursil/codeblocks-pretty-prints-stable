@@ -14,6 +14,11 @@ from scripts.codeblocks_stable import validate_release_inputs  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser for release-input validation.
+
+    Accepts an optional ``repo_root`` positional (defaulting to the current
+    working directory) and an optional ``--output`` path for the report.
+    """
     parser = argparse.ArgumentParser(
         description="Validate the release inputs for the curated Code::Blocks package."
     )

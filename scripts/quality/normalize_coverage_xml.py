@@ -37,6 +37,11 @@ def normalize_coverage_xml_paths(path: str | Path) -> bool:
 
 
 def _build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser accepting the Cobertura report path to normalize.
+
+    The single positional ``coverage_xml`` argument names the report whose
+    ``class`` filenames are rewritten to POSIX ``scripts/``-rooted paths.
+    """
     parser = argparse.ArgumentParser(
         description='Normalize Cobertura XML paths for provider uploads.'
     )
