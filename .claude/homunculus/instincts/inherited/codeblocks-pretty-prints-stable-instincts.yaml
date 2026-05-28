@@ -1,0 +1,554 @@
+# Instincts generated from https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+# Generated: 2026-05-28T11:24:24.189Z
+# Version: 2.0
+# NOTE: This file supplements (does not replace) any existing curated instincts.
+# High-confidence manually curated instincts should be preserved alongside these.
+
+---
+id: codeblocks-pretty-prints-stable-commit-conventional
+trigger: "when writing a commit message"
+confidence: 0.85
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Commit Conventional
+
+## Action
+
+Use conventional commit format with prefixes: fix, test, chore, docs, refactor
+
+## Evidence
+
+- 5 commits analyzed
+- Detected conventional commit pattern
+- Examples: fix(quality): bring scripts to strict-zero analyzer state, test(quality): bring test suite to strict-zero analyzer state
+
+---
+id: codeblocks-pretty-prints-stable-commit-length
+trigger: "when writing a commit message"
+confidence: 0.6
+domain: git
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Commit Length
+
+## Action
+
+Write moderate-length commit messages (~61 characters)
+
+## Evidence
+
+- Average commit message length: 61 chars
+- Based on 5 commits
+
+---
+id: codeblocks-pretty-prints-stable-naming-files
+trigger: "when creating a new file"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Naming Files
+
+## Action
+
+Use snake_case naming convention
+
+## Evidence
+
+- Analyzed file naming patterns in repository
+- Dominant pattern: snake_case
+
+---
+id: codeblocks-pretty-prints-stable-import-relative
+trigger: "when importing modules"
+confidence: 0.75
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Import Relative
+
+## Action
+
+Use relative imports for project files
+
+## Evidence
+
+- Import analysis shows relative import pattern
+- Example: import { x } from '../lib/x'
+
+---
+id: codeblocks-pretty-prints-stable-export-style
+trigger: "when exporting from a module"
+confidence: 0.7
+domain: code-style
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Export Style
+
+## Action
+
+Prefer named exports
+
+## Evidence
+
+- Export pattern analysis
+- Dominant style: named
+
+---
+id: codeblocks-pretty-prints-stable-test-separate
+trigger: "when writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Test Separate
+
+## Action
+
+Place tests in the tests/ or __tests__/ directory, mirroring src structure
+
+## Evidence
+
+- Separate test directory pattern detected
+- Tests live in dedicated test folders
+
+---
+id: codeblocks-pretty-prints-stable-test-naming
+trigger: "when creating a test file"
+confidence: 0.85
+domain: testing
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Test Naming
+
+## Action
+
+Name test files using the pattern: *.test.ts
+
+## Evidence
+
+- File pattern: *.test.ts
+- Consistent across test files
+
+---
+id: codeblocks-pretty-prints-stable-workflow-feature-development
+trigger: "when implementing a new feature"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Workflow Feature Development
+
+## Action
+
+Follow the feature-development workflow:
+1. Add feature implementation
+2. Add tests for feature
+3. Update documentation
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~30x per month
+- Files: **/*.test.*
+
+---
+id: codeblocks-pretty-prints-stable-workflow-bring-code-and-tests-to-strict-analyzer-state
+trigger: "when doing bring code and tests to strict analyzer state"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Workflow Bring Code And Tests To Strict Analyzer State
+
+## Action
+
+Follow the bring-code-and-tests-to-strict-analyzer-state workflow:
+1. Add or update docstrings for modules, functions, and classes in both source and test files.
+2. Wrap lines to the configured line length limit (e.g., 100 chars).
+3. Fix type annotations and mypy errors (e.g., Optionals, imports).
+4. Update or add linter configurations (e.g., .pylintrc, setup.cfg, flake8 config).
+5. Refactor code to comply with linter rules (e.g., argument/local limits, import resolution).
+6. Make test directory a package if needed for import resolution.
+7. Extract or refactor shared fixtures/utilities in tests.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: scripts/*.py, scripts/quality/*.py, tests/*.py
+
+---
+id: codeblocks-pretty-prints-stable-workflow-document-private-functions-to-clear-linter-findings
+trigger: "when doing document private functions to clear linter findings"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Workflow Document Private Functions To Clear Linter Findings
+
+## Action
+
+Follow the document-private-functions-to-clear-linter-findings workflow:
+1. Identify private/internal functions lacking docstrings as flagged by linter.
+2. Add appropriate docstrings to these functions.
+3. Verify that the linter/code quality tool findings are cleared.
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: scripts/quality/*.py
+
+---
+id: codeblocks-pretty-prints-stable-workflow-refactor-shared-cli-dispatch-and-add-tests
+trigger: "when doing refactor shared cli dispatch and add tests"
+confidence: 0.55
+domain: workflow
+source: repo-analysis
+source_repo: https://github.com/Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Workflow Refactor Shared Cli Dispatch And Add Tests
+
+## Action
+
+Follow the refactor-shared-cli-dispatch-and-add-tests workflow:
+1. Identify duplicated CLI parsing/dispatch code in multiple scripts.
+2. Extract shared logic into a common/shared module.
+3. Update original scripts to use the shared helper.
+4. Add or update unit tests to cover the shared helper (including edge cases and explicit argument paths).
+
+## Evidence
+
+- Workflow detected from commit patterns
+- Frequency: ~1x per month
+- Files: scripts/codeblocks_*.py, scripts/codeblocks_shared.py, tests/test_codeblocks_*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-file-naming
+trigger: "When creating or renaming a Python file"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct File Naming
+
+## Action
+
+Use snake_case for file names
+
+## Evidence
+
+- Pattern in scripts/codeblocks_notices.py
+- Pattern in scripts/codeblocks_profile.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-function-naming
+trigger: "When defining a function"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Function Naming
+
+## Action
+
+Use camelCase for function names
+
+## Evidence
+
+- Naming convention documented in analysis
+- Pattern in scripts/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-class-naming
+trigger: "When defining a class"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Class Naming
+
+## Action
+
+Use PascalCase for class names
+
+## Evidence
+
+- Naming convention documented in analysis
+- Pattern in scripts/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-constant-naming
+trigger: "When defining a constant"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Constant Naming
+
+## Action
+
+Use SCREAMING_SNAKE_CASE for constants
+
+## Evidence
+
+- Naming convention documented in analysis
+- Pattern in scripts/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-import-style
+trigger: "When importing modules within the package"
+confidence: 0.9
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Import Style
+
+## Action
+
+Use relative imports
+
+## Evidence
+
+- Pattern in scripts/*.py
+- Analysis: importStyle is relative
+
+---
+id: codeblocks-pretty-prints-stable-instinct-export-style
+trigger: "When exporting functions or classes from a module"
+confidence: 0.8
+domain: code-style
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Export Style
+
+## Action
+
+Use named exports
+
+## Evidence
+
+- Analysis: exportStyle is named
+- Pattern in scripts/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-test-location
+trigger: "When adding or updating tests"
+confidence: 0.9
+domain: testing
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Test Location
+
+## Action
+
+Place test files in the separate 'tests' directory
+
+## Evidence
+
+- Pattern in tests/*.py
+- Architecture: testLocation is separate
+
+---
+id: codeblocks-pretty-prints-stable-instinct-test-file-pattern
+trigger: "When naming a test file"
+confidence: 0.7
+domain: testing
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Test File Pattern
+
+## Action
+
+Use the pattern '*.test.ts' for test files
+
+## Evidence
+
+- Testing: filePattern is *.test.ts
+- Pattern in tests/
+
+---
+id: codeblocks-pretty-prints-stable-instinct-unit-test-type
+trigger: "When writing tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Unit Test Type
+
+## Action
+
+Write unit tests as the primary test type
+
+## Evidence
+
+- Testing: testTypes includes unit
+- Pattern in tests/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-test-coverage-config
+trigger: "When configuring tests"
+confidence: 0.8
+domain: testing
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Test Coverage Config
+
+## Action
+
+Ensure test coverage configuration is present
+
+## Evidence
+
+- Testing: coverageConfig is true
+- Presence of .pylintrc, setup.cfg
+
+---
+id: codeblocks-pretty-prints-stable-instinct-git-commit-format
+trigger: "When writing a commit message"
+confidence: 0.9
+domain: git
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Git Commit Format
+
+## Action
+
+Use conventional commit prefixes: fix, test, chore, docs, refactor
+
+## Evidence
+
+- fix(quality): bring scripts to strict-zero analyzer state
+- test(quality): bring test suite to strict-zero analyzer state
+- chore(ci): align provider configs with the platform profile
+- docs(scripts): add docstrings to private CLI parser builders
+- refactor(scripts): extract shared CLI dispatch and document parsers
+
+---
+id: codeblocks-pretty-prints-stable-instinct-git-commit-length
+trigger: "When writing a commit message"
+confidence: 0.7
+domain: git
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Git Commit Length
+
+## Action
+
+Keep commit messages around 61 characters on average
+
+## Evidence
+
+- Commits: averageLength is 61
+- Pattern in commit examples
+
+---
+id: codeblocks-pretty-prints-stable-instinct-strict-analyzer-workflow
+trigger: "When someone wants to ensure the codebase and tests pass all static analysis and linting checks at the strictest level"
+confidence: 0.95
+domain: workflow
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Strict Analyzer Workflow
+
+## Action
+
+Bring both code and test suites into compliance with strict static analysis and linting requirements (add/update docstrings, wrap lines, fix type annotations, update linter configs, refactor for linter rules, package test directory, extract shared fixtures/utilities)
+
+## Evidence
+
+- Workflow: bring-code-and-tests-to-strict-analyzer-state
+- Commits: Add or update docstrings for modules, functions, and classes in both source and test files.
+- Files: scripts/*.py, tests/*.py, .pylintrc, setup.cfg
+
+---
+id: codeblocks-pretty-prints-stable-instinct-document-private-functions-workflow
+trigger: "When someone wants to clear missing-docstring findings for private functions flagged by static analysis tools"
+confidence: 0.85
+domain: workflow
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Document Private Functions Workflow
+
+## Action
+
+Add docstrings to private/internal functions as flagged by linter, and verify findings are cleared
+
+## Evidence
+
+- Workflow: document-private-functions-to-clear-linter-findings
+- Commits: Add appropriate docstrings to these functions.
+- Files: scripts/quality/*.py
+
+---
+id: codeblocks-pretty-prints-stable-instinct-refactor-shared-cli-workflow
+trigger: "When someone wants to eliminate code duplication in CLI entrypoints and ensure the new shared logic is fully tested"
+confidence: 0.9
+domain: workflow
+source: repo-analysis
+source_repo: Prekzursil/codeblocks-pretty-prints-stable
+---
+
+# Codeblocks Pretty Prints Stable Instinct Refactor Shared Cli Workflow
+
+## Action
+
+Extract duplicated CLI parsing/dispatch logic into a shared helper, update scripts to use it, and add or update unit tests for the shared helper
+
+## Evidence
+
+- Workflow: refactor-shared-cli-dispatch-and-add-tests
+- Commits: Extract shared logic into a common/shared module.
+- Files: scripts/codeblocks_*.py, scripts/codeblocks_shared.py, tests/test_codeblocks_*.py
+
