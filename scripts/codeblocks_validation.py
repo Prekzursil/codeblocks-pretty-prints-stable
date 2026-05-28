@@ -1,3 +1,4 @@
+"""Payload-manifest and release-input validation helpers."""
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
@@ -6,16 +7,25 @@ from typing import Any
 
 from scripts.codeblocks_notices import collect_notice_inventory
 from scripts.codeblocks_profile import validate_profile_overlay_contract
-from scripts.codeblocks_shared import ensure_str_list, load_json_document, require_non_empty_string
+from scripts.codeblocks_shared import (
+    ensure_str_list,
+    load_json_document,
+    require_non_empty_string,
+)
 
 
-def require_manifest_keys(manifest: Mapping[str, Any], required_keys: Sequence[str]) -> None:
+def require_manifest_keys(
+    manifest: Mapping[str, Any],
+    required_keys: Sequence[str],
+) -> None:
+    """Raise if any of ``required_keys`` is absent from ``manifest``."""
     missing = [key for key in required_keys if key not in manifest]
     if missing:
         raise ValueError(f"manifest missing keys: {', '.join(missing)}")
 
 
 def validate_manifest_literals(manifest: Mapping[str, Any]) -> None:
+    """Validate the fixed literal fields of the payload manifest."""
     expected_literals = {
         "schema_version": 1,
         "install_scope": "machine-wide",
@@ -27,6 +37,7 @@ def validate_manifest_literals(manifest: Mapping[str, Any]) -> None:
 
 
 def validate_bundled_toolchain(payload: Any) -> None:
+    """Validate the ``bundled_toolchain`` section of the manifest."""
     if not isinstance(payload, dict):
         raise ValueError("bundled_toolchain must be a JSON object")
     for key in ("gcc_version", "gdb_version", "family"):
@@ -34,13 +45,20 @@ def validate_bundled_toolchain(payload: Any) -> None:
 
 
 def validate_profile_rewrites(payload: Any) -> None:
+    """Validate the ``profile_rewrites`` section of the manifest."""
     if not isinstance(payload, dict):
         raise ValueError("profile_rewrites must be a JSON object")
-    for key in ("debugger_executable", "debugger_python_root", "toolchain_root", "profile_root"):
+    for key in (
+        "debugger_executable",
+        "debugger_python_root",
+        "toolchain_root",
+        "profile_root",
+    ):
         require_non_empty_string(payload.get(key), f"profile_rewrites.{key}")
 
 
 def validate_payload_manifest(manifest: Mapping[str, Any]) -> None:
+    """Validate the full payload manifest against the release contract."""
     required_keys = (
         "schema_version",
         "repo_name",
@@ -65,7 +83,8 @@ def validate_payload_manifest(manifest: Mapping[str, Any]) -> None:
     validate_manifest_literals(manifest)
     for key in ("repo_name", "edition_name", "product_name"):
         require_non_empty_string(manifest[key], key)
-    if not {"x86", "x64"}.issubset(set(ensure_str_list(manifest["target_architectures"], "target_architectures"))):
+    targets = set(ensure_str_list(manifest["target_architectures"], "target_architectures"))
+    if not {"x86", "x64"}.issubset(targets):
         raise ValueError("target_architectures must include x86 and x64")
     validate_bundled_toolchain(manifest["bundled_toolchain"])
     ensure_str_list(manifest["profile_sources"], "profile_sources")
@@ -75,6 +94,7 @@ def validate_payload_manifest(manifest: Mapping[str, Any]) -> None:
 
 
 def load_manifest(path: str | Path) -> dict[str, Any]:
+    """Load ``path`` and validate it as a payload manifest."""
     manifest = load_json_document(path)
     validate_payload_manifest(manifest)
     return manifest
@@ -85,18 +105,35 @@ def release_input_checks(
     overlay_seed: Mapping[str, Any],
     profile_state: Mapping[str, Any],
 ) -> list[tuple[bool, str]]:
+    """Return the (condition, message) checks for release inputs."""
+    debugger_init = overlay_seed.get("debugger_init_commands")
     return [
-        (notices_manifest.get("schema_version") == 1, "notice_inventory schema_version must be 1"),
-        (isinstance(notices_manifest.get("included_patterns"), list), "notice_inventory included_patterns must be a list"),
-        (overlay_seed.get("schema_version") == 1, "overlay profile_seed schema_version must be 1"),
-        (bool(profile_state["profile_seed_root"].is_dir()), "materialized profile seed directory is missing"),
+        (
+            notices_manifest.get("schema_version") == 1,
+            "notice_inventory schema_version must be 1",
+        ),
+        (
+            isinstance(notices_manifest.get("included_patterns"), list),
+            "notice_inventory included_patterns must be a list",
+        ),
+        (
+            overlay_seed.get("schema_version") == 1,
+            "overlay profile_seed schema_version must be 1",
+        ),
+        (
+            bool(profile_state["profile_seed_root"].is_dir()),
+            "materialized profile seed directory is missing",
+        ),
         (
             not profile_state["missing_files"],
             f"profile seed is missing files: {', '.join(profile_state['missing_files'])}",
         ),
-        (bool(profile_state["replacements_path"].is_file()), "profile seed overlay contract is missing"),
         (
-            isinstance(overlay_seed.get("debugger_init_commands"), list) and bool(overlay_seed["debugger_init_commands"]),
+            bool(profile_state["replacements_path"].is_file()),
+            "profile seed overlay contract is missing",
+        ),
+        (
+            isinstance(debugger_init, list) and bool(debugger_init),
             "overlay profile_seed debugger_init_commands must be a non-empty list",
         ),
         (profile_state["notice_count"] > 0, "notice inventory is empty"),
@@ -104,6 +141,7 @@ def release_input_checks(
 
 
 def validate_release_inputs(repo_root: str | Path) -> dict[str, Any]:
+    """Validate every release input under ``repo_root`` and summarize."""
     repo = Path(repo_root)
     manifest = load_manifest(repo / "manifests" / "codeblocks_stable_toolchain.json")
     notices_manifest = load_json_document(repo / "manifests" / "notice_inventory.json")
@@ -112,7 +150,9 @@ def validate_release_inputs(repo_root: str | Path) -> dict[str, Any]:
     replacements_path = repo / "overlay" / "profile-replacements.json"
     notices = collect_notice_inventory(repo, notices_manifest)
     expected_outputs = ensure_str_list(manifest["profile_outputs"], "profile_outputs")
-    missing_files = [name for name in expected_outputs if not (profile_seed_root / name).is_file()]
+    missing_files = [
+        name for name in expected_outputs if not (profile_seed_root / name).is_file()
+    ]
     profile_state = {
         "profile_seed_root": profile_seed_root,
         "replacements_path": replacements_path,

@@ -1,3 +1,4 @@
+"""CLI for fetch-and-package helpers for the Stable Toolchain Edition."""
 from __future__ import annotations
 
 import argparse
@@ -6,7 +7,12 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from scripts import codeblocks_notices, codeblocks_profile, codeblocks_shared, codeblocks_validation
+from scripts import (
+    codeblocks_notices,
+    codeblocks_profile,
+    codeblocks_shared,
+    codeblocks_validation,
+)
 
 DEFAULT_NOTICE_PATTERNS = codeblocks_notices.DEFAULT_NOTICE_PATTERNS
 RUNTIME_NOTICE_PATTERNS = codeblocks_notices.RUNTIME_NOTICE_PATTERNS
@@ -81,13 +87,17 @@ __all__ = [
 
 
 def _cmd_validate_manifest(args: argparse.Namespace) -> int:
+    """Validate the payload manifest at ``args.manifest``."""
     load_manifest(args.manifest)
     print(f"validated manifest: {args.manifest}")
     return 0
 
 
 def _cmd_inventory_notices(args: argparse.Namespace) -> int:
-    notice_manifest = load_json_document(args.notice_manifest) if args.notice_manifest else None
+    """Write the notice inventory for ``args.root`` to the chosen output."""
+    notice_manifest = (
+        load_json_document(args.notice_manifest) if args.notice_manifest else None
+    )
     if notice_manifest is not None and notice_manifest.get("schema_version") != 1:
         raise SystemExit("notice manifest schema_version must be 1")
     payload = [
@@ -106,6 +116,7 @@ def _cmd_inventory_notices(args: argparse.Namespace) -> int:
 
 
 def _cmd_normalize_profile(args: argparse.Namespace) -> int:
+    """Normalize a source profile bundle into ``args.output_dir``."""
     manifest = load_manifest(args.manifest)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -115,6 +126,7 @@ def _cmd_normalize_profile(args: argparse.Namespace) -> int:
 
 
 def _cmd_materialize_profile_seed(args: argparse.Namespace) -> int:
+    """Materialize a managed profile seed and overlay contract."""
     manifest = load_manifest(args.manifest)
     materialize_profile_seed(
         args.source_profile,
@@ -126,14 +138,22 @@ def _cmd_materialize_profile_seed(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Fetch-and-package helpers for Code::Blocks Stable Toolchain Edition.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Fetch-and-package helpers for Code::Blocks Stable Toolchain Edition."
+        )
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    validate_manifest = subparsers.add_parser("validate-manifest", help="Validate the payload manifest JSON.")
+    validate_manifest = subparsers.add_parser(
+        "validate-manifest", help="Validate the payload manifest JSON."
+    )
     validate_manifest.add_argument("manifest", type=Path)
     validate_manifest.set_defaults(func=_cmd_validate_manifest)
 
-    normalize_profile = subparsers.add_parser("normalize-profile", help="Normalize a source Code::Blocks profile bundle.")
+    normalize_profile = subparsers.add_parser(
+        "normalize-profile", help="Normalize a source Code::Blocks profile bundle."
+    )
     normalize_profile.add_argument("manifest", type=Path)
     normalize_profile.add_argument("source_profile", type=Path)
     normalize_profile.add_argument("output_dir", type=Path)
@@ -149,7 +169,9 @@ def _build_parser() -> argparse.ArgumentParser:
     materialize_profile.add_argument("replacements_path", type=Path)
     materialize_profile.set_defaults(func=_cmd_materialize_profile_seed)
 
-    inventory_notices = subparsers.add_parser("inventory-notices", help="Inventory redistributable notice files.")
+    inventory_notices = subparsers.add_parser(
+        "inventory-notices", help="Inventory redistributable notice files."
+    )
     inventory_notices.add_argument("root", type=Path)
     inventory_notices.add_argument("--notice-manifest", type=Path, default=None)
     inventory_notices.add_argument("--output", default="-")
@@ -159,6 +181,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Parse ``argv`` and dispatch to the selected subcommand."""
     args = _build_parser().parse_args(list(argv) if argv is not None else None)
     return int(args.func(args))
 

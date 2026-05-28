@@ -1,3 +1,4 @@
+"""CLI entrypoint that validates curated release inputs."""
 from __future__ import annotations
 
 import argparse
@@ -8,17 +9,21 @@ from typing import Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from scripts.codeblocks_stable import validate_release_inputs
+# pylint: disable=wrong-import-position
+from scripts.codeblocks_stable import validate_release_inputs  # noqa: E402
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Validate the release inputs for the curated Code::Blocks package.")
+    parser = argparse.ArgumentParser(
+        description="Validate the release inputs for the curated Code::Blocks package."
+    )
     parser.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     parser.add_argument("--output", type=Path, default=None)
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Validate release inputs for the repo root named on the CLI."""
     parser = _build_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
     result = validate_release_inputs(args.repo_root)
@@ -34,4 +39,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

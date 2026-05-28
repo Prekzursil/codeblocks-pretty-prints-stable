@@ -1,6 +1,8 @@
+"""Release-preparation helpers for the Stable Toolchain Edition."""
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import shutil
 from collections.abc import Mapping, Sequence
@@ -13,8 +15,13 @@ from scripts.codeblocks_notices import collect_notice_inventory
 from scripts.codeblocks_shared import load_json_document
 from scripts.codeblocks_validation import load_manifest
 
-DEV_ONLY_GDB_SOURCE = r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-views-1.0.3.gdb"
-PATCHED_GDB_COMMENT = "# dev-only stl-views source removed; managed pretty-printers are configured in the seeded profile"
+DEV_ONLY_GDB_SOURCE = (
+    r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-views-1.0.3.gdb"
+)
+PATCHED_GDB_COMMENT = (
+    "# dev-only stl-views source removed; managed pretty-printers are "
+    "configured in the seeded profile"
+)
 PATCHED_GDB_PATH = Path("share") / "CodeBlocks" / "scripts" / "gdb_init.gdb"
 LOCAL_PAYLOAD_KIND = "local-known-good-install"
 THIRD_PARTY_NOTICES_NAME = "THIRD_PARTY_NOTICES.md"
@@ -23,6 +30,7 @@ PROVENANCE_NAME = "provenance.json"
 
 
 def sanitize_gdb_init(text: str) -> str:
+    """Replace the dev-only stl-views source line with a managed comment."""
     lines = []
     replaced = False
     for raw_line in text.splitlines():
@@ -37,6 +45,7 @@ def sanitize_gdb_init(text: str) -> str:
 
 
 def patch_staged_gdb_init(payload_root: str | Path) -> bool:
+    """Patch the staged ``gdb_init.gdb`` in place; return whether changed."""
     gdb_init_path = Path(payload_root) / PATCHED_GDB_PATH
     if not gdb_init_path.is_file():
         return False
@@ -49,6 +58,7 @@ def patch_staged_gdb_init(payload_root: str | Path) -> bool:
 
 
 def file_sha256(path: str | Path) -> str:
+    """Return the SHA-256 hex digest of the file at ``path``."""
     digest = sha256()
     with Path(path).open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
@@ -57,14 +67,17 @@ def file_sha256(path: str | Path) -> str:
 
 
 def render_release_notes(version: str, manifest: Mapping[str, Any]) -> str:
+    """Render the Markdown release notes for ``version``."""
     toolchain = manifest["bundled_toolchain"]
     return (
         f"# Code::Blocks Stable Toolchain Edition {version}\n\n"
         "## What this release is\n\n"
-        "This release mirrors the known-good local Code::Blocks setup that was already working properly, "
-        "including the managed debugger and pretty-printer defaults needed for useful watch-window debugging.\n\n"
+        "This release mirrors the known-good local Code::Blocks setup that was "
+        "already working properly, including the managed debugger and "
+        "pretty-printer defaults needed for useful watch-window debugging.\n\n"
         "## Baseline\n\n"
-        f"- Code::Blocks: {manifest['product_name']} {manifest['schema_version'] and '25.03'}\n"
+        f"- Code::Blocks: {manifest['product_name']} "
+        f"{manifest['schema_version'] and '25.03'}\n"
         f"- GCC/G++: {toolchain['gcc_version']}\n"
         f"- GDB: {toolchain['gdb_version']}\n"
         f"- Host support: {manifest['host_architecture']} Windows 10/11\n"
@@ -87,6 +100,7 @@ def build_release_manifest(
     source_install_root: str | Path,
     source_payload_sha256: str,
 ) -> dict[str, Any]:
+    """Build the release-manifest document for the staged payload."""
     toolchain = payload_manifest["bundled_toolchain"]
     return {
         "schema_version": 1,
@@ -124,6 +138,7 @@ def build_sbom(
     payload_manifest: Mapping[str, Any],
     source_payload_sha256: str,
 ) -> dict[str, Any]:
+    """Build a CycloneDX SBOM document for the staged payload."""
     toolchain = payload_manifest["bundled_toolchain"]
     timestamp = datetime.now(timezone.utc).isoformat()
     return {
@@ -170,6 +185,7 @@ def build_provenance(
     source_install_root: str | Path,
     source_payload_sha256: str,
 ) -> dict[str, Any]:
+    """Build the build-provenance document for the staged payload."""
     return {
         "schema_version": 1,
         "version": version,
@@ -191,7 +207,10 @@ def materialize_notice_bundle(
     payload_root: Path,
     release_assets_root: Path,
 ) -> list[str]:
-    notice_manifest = load_json_document(repo_root / "manifests" / "notice_inventory.json")
+    """Copy harvested notice files into the release-assets tree."""
+    notice_manifest = load_json_document(
+        repo_root / "manifests" / "notice_inventory.json"
+    )
     entries = collect_notice_inventory(payload_root, notice_manifest)
     harvested_root = release_assets_root / "notices"
     harvested_paths: list[str] = []
@@ -210,6 +229,7 @@ def compose_notice_policy(
     harvested_paths: Sequence[str],
     version: str,
 ) -> str:
+    """Compose the notice policy with the harvested inventory appended."""
     policy = (repo_root / THIRD_PARTY_NOTICES_NAME).read_text(encoding="utf-8").rstrip()
     lines = [
         policy,
@@ -225,6 +245,84 @@ def compose_notice_policy(
     return "\n".join(lines)
 
 
+def _write_json_asset(path: Path, document: Mapping[str, Any]) -> None:
+    """Write ``document`` to ``path`` as pretty-printed UTF-8 JSON."""
+    path.write_text(json.dumps(dict(document), indent=2) + "\n", encoding="utf-8")
+
+
+@dataclasses.dataclass(frozen=True)
+class _ReleaseContext:
+    """Inputs shared across every release-asset writer."""
+
+    repo: Path
+    payload_manifest: Mapping[str, Any]
+    payload_root: Path
+    source_root: Path
+    source_sha: str
+    version: str
+
+
+def _materialize_release_assets(
+    context: _ReleaseContext,
+    release_assets_root: Path,
+) -> dict[str, Any]:
+    """Write every release asset and return a summary of their paths."""
+    version = context.version
+    payload_manifest = context.payload_manifest
+    source_root = context.source_root
+    source_sha = context.source_sha
+    release_assets_root.mkdir(parents=True, exist_ok=True)
+    harvested_paths = materialize_notice_bundle(
+        repo_root=context.repo,
+        payload_root=context.payload_root,
+        release_assets_root=release_assets_root,
+    )
+    release_notes_name = f"RELEASE_NOTES_{version}.md"
+    (release_assets_root / release_notes_name).write_text(
+        render_release_notes(version, payload_manifest), encoding="utf-8"
+    )
+    (release_assets_root / THIRD_PARTY_NOTICES_NAME).write_text(
+        compose_notice_policy(
+            repo_root=context.repo, harvested_paths=harvested_paths, version=version
+        ),
+        encoding="utf-8",
+    )
+    _write_json_asset(
+        release_assets_root / "release-manifest.json",
+        build_release_manifest(
+            version=version,
+            payload_manifest=payload_manifest,
+            source_install_root=source_root,
+            source_payload_sha256=source_sha,
+        ),
+    )
+    _write_json_asset(
+        release_assets_root / SBOM_NAME,
+        build_sbom(
+            version=version,
+            payload_manifest=payload_manifest,
+            source_payload_sha256=source_sha,
+        ),
+    )
+    _write_json_asset(
+        release_assets_root / PROVENANCE_NAME,
+        build_provenance(
+            version=version,
+            source_install_root=source_root,
+            source_payload_sha256=source_sha,
+        ),
+    )
+    return {
+        "release_assets_root": str(release_assets_root),
+        "release_notes_path": str(release_assets_root / release_notes_name),
+        "notices_path": str(release_assets_root / THIRD_PARTY_NOTICES_NAME),
+        "manifest_path": str(release_assets_root / "release-manifest.json"),
+        "sbom_path": str(release_assets_root / SBOM_NAME),
+        "provenance_path": str(release_assets_root / PROVENANCE_NAME),
+        "harvested_notice_count": len(harvested_paths),
+    }
+
+
 def prepare_local_release(
     *,
     repo_root: str | Path,
@@ -232,15 +330,17 @@ def prepare_local_release(
     version: str,
     output_root: str | Path,
 ) -> dict[str, Any]:
+    """Stage a known-good install into a payload and release-assets tree."""
     repo = Path(repo_root)
     source_root = Path(source_install_root)
     if not (source_root / "codeblocks.exe").is_file():
         raise ValueError(f"Code::Blocks executable not found under {source_root}")
 
-    payload_manifest = load_manifest(repo / "manifests" / "codeblocks_stable_toolchain.json")
+    payload_manifest = load_manifest(
+        repo / "manifests" / "codeblocks_stable_toolchain.json"
+    )
     output = Path(output_root)
     payload_root = output / "payload" / "CodeBlocks"
-    release_assets_root = output / "release-assets"
 
     if output.exists():
         shutil.rmtree(output)
@@ -249,58 +349,27 @@ def prepare_local_release(
     patched = patch_staged_gdb_init(payload_root)
     source_sha = file_sha256(payload_root / "codeblocks.exe")
 
-    release_assets_root.mkdir(parents=True, exist_ok=True)
-    harvested_paths = materialize_notice_bundle(
-        repo_root=repo,
-        payload_root=payload_root,
-        release_assets_root=release_assets_root,
+    assets = _materialize_release_assets(
+        _ReleaseContext(
+            repo=repo,
+            payload_manifest=payload_manifest,
+            payload_root=payload_root,
+            source_root=source_root,
+            source_sha=source_sha,
+            version=version,
+        ),
+        output / "release-assets",
     )
-    release_notes = render_release_notes(version, payload_manifest)
-    release_notes_name = f"RELEASE_NOTES_{version}.md"
-    (release_assets_root / release_notes_name).write_text(release_notes, encoding="utf-8")
-
-    notice_text = compose_notice_policy(repo_root=repo, harvested_paths=harvested_paths, version=version)
-    (release_assets_root / THIRD_PARTY_NOTICES_NAME).write_text(notice_text, encoding="utf-8")
-
-    release_manifest = build_release_manifest(
-        version=version,
-        payload_manifest=payload_manifest,
-        source_install_root=source_root,
-        source_payload_sha256=source_sha,
-    )
-    (release_assets_root / "release-manifest.json").write_text(
-        json.dumps(release_manifest, indent=2) + "\n",
-        encoding="utf-8",
-    )
-
-    sbom = build_sbom(version=version, payload_manifest=payload_manifest, source_payload_sha256=source_sha)
-    (release_assets_root / SBOM_NAME).write_text(json.dumps(sbom, indent=2) + "\n", encoding="utf-8")
-
-    provenance = build_provenance(
-        version=version,
-        source_install_root=source_root,
-        source_payload_sha256=source_sha,
-    )
-    (release_assets_root / PROVENANCE_NAME).write_text(
-        json.dumps(provenance, indent=2) + "\n",
-        encoding="utf-8",
-    )
-
     return {
         "output_root": str(output),
         "payload_root": str(payload_root),
-        "release_assets_root": str(release_assets_root),
-        "release_notes_path": str(release_assets_root / release_notes_name),
-        "notices_path": str(release_assets_root / THIRD_PARTY_NOTICES_NAME),
-        "manifest_path": str(release_assets_root / "release-manifest.json"),
-        "sbom_path": str(release_assets_root / SBOM_NAME),
-        "provenance_path": str(release_assets_root / PROVENANCE_NAME),
         "patched_dev_gdb_init": patched,
-        "harvested_notice_count": len(harvested_paths),
+        **assets,
     }
 
 
 def _cmd_prepare_local_release(args: argparse.Namespace) -> int:
+    """Run ``prepare_local_release`` from CLI arguments and emit JSON."""
     payload = prepare_local_release(
         repo_root=args.repo_root,
         source_install_root=args.source_install_root,
@@ -313,12 +382,20 @@ def _cmd_prepare_local_release(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Release-preparation helpers for Code::Blocks Stable Toolchain Edition.")
+    parser = argparse.ArgumentParser(
+        description=(
+            "Release-preparation helpers for Code::Blocks Stable "
+            "Toolchain Edition."
+        )
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     prepare = subparsers.add_parser(
         "prepare-local-release",
-        help="Stage a local known-good Code::Blocks install into dist payload/release-assets output.",
+        help=(
+            "Stage a local known-good Code::Blocks install into dist "
+            "payload/release-assets output."
+        ),
     )
     prepare.add_argument("--repo-root", type=Path, required=True)
     prepare.add_argument("--source-install-root", type=Path, required=True)
@@ -329,6 +406,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Parse ``argv`` and dispatch to the selected subcommand."""
     args = _build_parser().parse_args(list(argv) if argv is not None else None)
     return int(args.func(args))
 

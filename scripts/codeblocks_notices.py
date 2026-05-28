@@ -1,3 +1,4 @@
+"""Notice-harvesting policy for redistributable license/runtime files."""
 from __future__ import annotations
 
 import fnmatch
@@ -26,8 +27,13 @@ RUNTIME_NOTICE_PATTERNS = {"gdbinit", "printers.py", "xmethods.py"}
 
 
 def is_runtime_notice_pattern(pattern: str) -> bool:
+    """Return ``True`` when ``pattern`` matches a runtime notice file."""
     normalized = pattern.lower()
-    return normalized in RUNTIME_NOTICE_PATTERNS or normalized.endswith(".gdb.py") or normalized.startswith("stl-views-")
+    return (
+        normalized in RUNTIME_NOTICE_PATTERNS
+        or normalized.endswith(".gdb.py")
+        or normalized.startswith("stl-views-")
+    )
 
 
 def notice_category_from_name(
@@ -35,9 +41,13 @@ def notice_category_from_name(
     categories: Mapping[str, Iterable[str]],
     default_patterns: Sequence[str],
 ) -> str | None:
+    """Classify a file ``name`` into a notice category, or ``None``."""
     lowered_name = name.lower()
     for category, patterns in categories.items():
-        if any(fnmatch.fnmatchcase(lowered_name, str(pattern).lower()) for pattern in patterns):
+        if any(
+            fnmatch.fnmatchcase(lowered_name, str(pattern).lower())
+            for pattern in patterns
+        ):
             return str(category)
     for pattern in default_patterns:
         if fnmatch.fnmatchcase(lowered_name, pattern.lower()):
@@ -45,11 +55,17 @@ def notice_category_from_name(
     return None
 
 
-def collect_notice_inventory(root: str | Path, manifest: Mapping[str, object] | None = None) -> list[NoticeEntry]:
+def collect_notice_inventory(
+    root: str | Path,
+    manifest: Mapping[str, object] | None = None,
+) -> list[NoticeEntry]:
+    """Walk ``root`` and collect matching notice files as entries."""
     patterns = DEFAULT_NOTICE_PATTERNS
     categories: Mapping[str, Iterable[str]] = {}
     if manifest is not None:
-        patterns = ensure_str_list(manifest.get("included_patterns", patterns), "included_patterns")
+        patterns = ensure_str_list(
+            manifest.get("included_patterns", patterns), "included_patterns"
+        )
         raw_categories = manifest.get("categories", {})
         if not isinstance(raw_categories, Mapping):
             raise ValueError("categories must be a JSON object")
@@ -68,5 +84,8 @@ def collect_notice_inventory(root: str | Path, manifest: Mapping[str, object] | 
 
 
 def render_notice_inventory(entries: Sequence[NoticeEntry]) -> str:
-    body = [f"- {entry.path} ({entry.category})" for entry in entries] or ["- None found"]
+    """Render the notice inventory ``entries`` as a Markdown list."""
+    body = [
+        f"- {entry.path} ({entry.category})" for entry in entries
+    ] or ["- None found"]
     return "\n".join(["# Notice inventory", "", *body, ""])
