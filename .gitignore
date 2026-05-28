@@ -20,6 +20,11 @@ __pycache__/
 .coverage
 htmlcov/
 
+# Local virtual environments
+.venv/
+venv/
+.env/
+
 # Node / JS tooling
 node_modules/
 .npm/
