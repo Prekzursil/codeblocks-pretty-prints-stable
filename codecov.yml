@@ -2,8 +2,7 @@ codecov:
   require_ci_to_pass: true
 
 ignore:
-  - ".guardrails.yml"
-  - ".guardrails.yaml"
+  - ".guardrails/**"
   - ".deepsource.toml"
   - ".qlty/**"
   - ".github/dependabot.yml"
