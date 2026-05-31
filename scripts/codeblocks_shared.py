@@ -65,8 +65,10 @@ def _is_non_blank_string(item: Any) -> bool:
 
 def ensure_str_list(value: Any, label: str) -> list[str]:
     """Validate ``value`` is a non-empty list of non-blank strings."""
-    if not isinstance(value, list) or not all(
-        _is_non_blank_string(item) for item in value
+    if (
+        not isinstance(value, list)
+        or not value
+        or not all(_is_non_blank_string(item) for item in value)
     ):
         raise ValueError(f"{label} must be a non-empty list of strings")
     return [item.strip() for item in value]

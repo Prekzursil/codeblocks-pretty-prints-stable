@@ -94,7 +94,14 @@ def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
     current_root = roots["current_install_root"]
     debugger = roots["debugger_executable"]
     toolchain_root = roots["toolchain_root"]
+    edition_install_root = roots["edition_install_root"]
+    managed_profile_root = roots["managed_profile_root"]
     replacements = [
+        # Identity-protect already-normalized destination roots so the shorter
+        # current_root / current_profile_root prefix substitutions below cannot
+        # corrupt them on a second normalization pass (idempotence guard).
+        (edition_install_root, edition_install_root),
+        (managed_profile_root, managed_profile_root),
         (current_root / "MinGW" / python_relative_path, toolchain_share_python),
         (current_root / "MINGW" / python_relative_path, toolchain_share_python),
         (current_root / "MinGW" / "bin" / debugger_executable_name, debugger),
@@ -104,8 +111,8 @@ def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
         (GENERIC_MINGW_ROOT / python_relative_path, toolchain_share_python),
         (GENERIC_MINGW_ROOT / "bin" / debugger_executable_name, debugger),
         (GENERIC_MINGW_ROOT, toolchain_root),
-        (current_root, roots["edition_install_root"]),
-        (roots["current_profile_root"], roots["managed_profile_root"]),
+        (current_root, edition_install_root),
+        (roots["current_profile_root"], managed_profile_root),
     ]
     return rewrite_windows_paths(text, replacements)
 
@@ -116,6 +123,9 @@ def normalize_codesnippets_ini(text: str, manifest: Mapping[str, Any]) -> str:
     current_profile = roots["current_profile_root"]
     managed_profile = roots["managed_profile_root"]
     replacements = [
+        # Identity-protect the managed profile root for idempotence on repeated
+        # invocations (current_profile is a prefix of managed_profile).
+        (managed_profile, managed_profile),
         (current_profile / "codesnippets.xml", managed_profile / "codesnippets.xml"),
         (current_profile, managed_profile),
     ]

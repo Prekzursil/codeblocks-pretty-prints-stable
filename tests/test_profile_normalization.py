@@ -110,6 +110,44 @@ SnippetFolder=
             normalized,
         )
 
+    def test_default_conf_normalization_is_idempotent(self) -> None:
+        """A second pass over already-normalized text must not corrupt paths.
+
+        Regression: `current_install_root` is a prefix of `edition_install_root`,
+        so naive prefix substitution would re-rewrite already-normalized text
+        on a second invocation, producing duplicated edition-suffix segments
+        like ``CodeBlocks Stable Toolchain Edition Stable Toolchain Edition``.
+        """
+        text = (
+            r"C:\Program Files\CodeBlocks\MinGW\bin\gdb.exe"
+            "\n"
+            r"C:\Program Files\CodeBlocks\MinGW\share\gcc-14.2.0\python"
+        )
+        once = normalize_codeblocks_profile(text, self.manifest)
+        twice = normalize_codeblocks_profile(once, self.manifest)
+        self.assertEqual(once, twice)
+        self.assertNotIn(
+            "Stable Toolchain Edition Stable Toolchain Edition", twice
+        )
+
+    def test_codesnippets_normalization_is_idempotent(self) -> None:
+        """codesnippets.ini normalization must also be idempotent.
+
+        Regression: ``current_profile_root`` is a prefix of
+        ``managed_profile_root``; without the identity-protection entry, a
+        repeated pass duplicates the profile-root suffix.
+        """
+        text = (
+            r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming"
+            r"\CodeBlocks\codesnippets.xml"
+        )
+        once = normalize_codesnippets_ini(text, self.manifest)
+        twice = normalize_codesnippets_ini(once, self.manifest)
+        self.assertEqual(once, twice)
+        self.assertNotIn(
+            "Stable Toolchain Edition Stable Toolchain Edition", twice
+        )
+
     def test_profile_bundle_requires_expected_inputs(self) -> None:
         """Normalizing a full bundle rewrites paths and preserves others."""
         bundle = {

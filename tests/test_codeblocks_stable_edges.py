@@ -10,7 +10,7 @@ import unittest
 import unittest.mock
 from pathlib import Path
 
-from scripts.codeblocks_shared import dispatch_cli
+from scripts.codeblocks_shared import dispatch_cli, ensure_str_list
 from scripts.codeblocks_stable import (
     NoticeEntry,
     _case_insensitive_replace,
@@ -42,6 +42,32 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             path.write_text("[]", encoding="utf-8")
             with self.assertRaises(ValueError):
                 load_json_document(path)
+
+    def test_ensure_str_list_rejects_empty_list(self) -> None:
+        """Empty lists must be rejected to match the "non-empty" contract.
+
+        Regression: ``all(...)`` returns True for an empty iterable, so the
+        validator previously accepted ``[]`` despite its docstring requiring a
+        non-empty list — letting misconfigured manifests skip downstream
+        existence checks.
+        """
+        with self.assertRaises(ValueError) as ctx:
+            ensure_str_list([], "profile_outputs")
+        self.assertIn("non-empty list of strings", str(ctx.exception))
+
+    def test_ensure_str_list_rejects_non_list_and_blank_strings(self) -> None:
+        """Non-list values and blank string elements are also rejected."""
+        with self.assertRaises(ValueError):
+            ensure_str_list("not-a-list", "label")
+        with self.assertRaises(ValueError):
+            ensure_str_list(["ok", "  "], "label")
+
+    def test_ensure_str_list_accepts_non_empty_and_strips(self) -> None:
+        """Non-empty lists of non-blank strings pass and are whitespace-stripped."""
+        self.assertEqual(
+            ensure_str_list(["  a  ", "b"], "label"),
+            ["a", "b"],
+        )
 
     def test_case_insensitive_replace_replaces_case_insensitively(self) -> None:
         """Replacement matches the source path regardless of case."""
