@@ -336,6 +336,26 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                     ]
                 )
 
+    def test_inventory_notices_runs_without_explicit_manifest(self) -> None:
+        """``inventory-notices`` works when ``--notice-manifest`` is omitted."""
+        with tempfile.TemporaryDirectory() as tmp:
+            notice_root = Path(tmp) / "payload"
+            notice_root.mkdir()
+            (notice_root / "LICENSE.txt").write_text("license", encoding="utf-8")
+
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                rc = main(
+                    [
+                        "inventory-notices",
+                        str(notice_root),
+                        "--output",
+                        "-",
+                    ]
+                )
+            self.assertEqual(rc, 0)
+            self.assertIn("LICENSE.txt", stdout.getvalue())
+
     def test_dispatch_cli_parses_and_invokes_selected_handler(self) -> None:
         """``dispatch_cli`` parses argv and returns the handler's exit code."""
         parser = argparse.ArgumentParser()

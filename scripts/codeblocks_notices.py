@@ -36,6 +36,31 @@ def is_runtime_notice_pattern(pattern: str) -> bool:
     )
 
 
+def _category_for_manifest_match(
+    lowered_name: str,
+    categories: Mapping[str, Iterable[str]],
+) -> str | None:
+    """Return the manifest category whose patterns match ``lowered_name``."""
+    for category, patterns in categories.items():
+        if any(
+            fnmatch.fnmatchcase(lowered_name, str(pattern).lower())
+            for pattern in patterns
+        ):
+            return str(category)
+    return None
+
+
+def _category_for_default_match(
+    lowered_name: str,
+    default_patterns: Sequence[str],
+) -> str | None:
+    """Return the default category whose pattern matches ``lowered_name``."""
+    for pattern in default_patterns:
+        if fnmatch.fnmatchcase(lowered_name, pattern.lower()):
+            return "runtime_notice" if is_runtime_notice_pattern(pattern) else "license"
+    return None
+
+
 def notice_category_from_name(
     name: str,
     categories: Mapping[str, Iterable[str]],
@@ -43,16 +68,33 @@ def notice_category_from_name(
 ) -> str | None:
     """Classify a file ``name`` into a notice category, or ``None``."""
     lowered_name = name.lower()
-    for category, patterns in categories.items():
-        if any(
-            fnmatch.fnmatchcase(lowered_name, str(pattern).lower())
-            for pattern in patterns
-        ):
-            return str(category)
-    for pattern in default_patterns:
-        if fnmatch.fnmatchcase(lowered_name, pattern.lower()):
-            return "runtime_notice" if is_runtime_notice_pattern(pattern) else "license"
-    return None
+    manifest_category = _category_for_manifest_match(lowered_name, categories)
+    if manifest_category is not None:
+        return manifest_category
+    return _category_for_default_match(lowered_name, default_patterns)
+
+
+def _resolve_inventory_config(
+    manifest: Mapping[str, object] | None,
+) -> tuple[Sequence[str], Mapping[str, Iterable[str]]]:
+    """Resolve the patterns/categories pair from an optional manifest."""
+    if manifest is None:
+        return DEFAULT_NOTICE_PATTERNS, {}
+    patterns = ensure_str_list(
+        manifest.get("included_patterns", DEFAULT_NOTICE_PATTERNS),
+        "included_patterns",
+    )
+    raw_categories = manifest.get("categories", {})
+    if not isinstance(raw_categories, Mapping):
+        raise ValueError("categories must be a JSON object")
+    return patterns, raw_categories
+
+
+def _iter_candidate_files(root_path: Path) -> Iterable[Path]:
+    """Yield candidate files under ``root_path`` excluding ``.git`` paths."""
+    for file_path in root_path.rglob("*"):
+        if file_path.is_file() and ".git" not in file_path.parts:
+            yield file_path
 
 
 def collect_notice_inventory(
@@ -60,22 +102,11 @@ def collect_notice_inventory(
     manifest: Mapping[str, object] | None = None,
 ) -> list[NoticeEntry]:
     """Walk ``root`` and collect matching notice files as entries."""
-    patterns = DEFAULT_NOTICE_PATTERNS
-    categories: Mapping[str, Iterable[str]] = {}
-    if manifest is not None:
-        patterns = ensure_str_list(
-            manifest.get("included_patterns", patterns), "included_patterns"
-        )
-        raw_categories = manifest.get("categories", {})
-        if not isinstance(raw_categories, Mapping):
-            raise ValueError("categories must be a JSON object")
-        categories = raw_categories
-
+    patterns, categories = _resolve_inventory_config(manifest)
     root_path = Path(root)
     entries = [
         NoticeEntry(path=file_path.relative_to(root_path).as_posix(), category=category)
-        for file_path in root_path.rglob("*")
-        if file_path.is_file() and ".git" not in file_path.parts
+        for file_path in _iter_candidate_files(root_path)
         for category in [notice_category_from_name(file_path.name, categories, patterns)]
         if category is not None
     ]

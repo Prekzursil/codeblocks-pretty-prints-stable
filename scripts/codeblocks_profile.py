@@ -151,6 +151,16 @@ def build_profile_overlay_contract() -> dict[str, Any]:
     }
 
 
+def _validate_overlay_replacement(index: int, entry: Any) -> None:
+    """Validate a single replacement ``entry`` from the overlay contract."""
+    if not isinstance(entry, Mapping):
+        raise ValueError(f"profile overlay replacement {index} must be an object")
+    for key in ("path", "search", "replace"):
+        require_non_empty_string(
+            entry.get(key), f"profile overlay replacement {index}.{key}"
+        )
+
+
 def validate_profile_overlay_contract(payload: Mapping[str, Any]) -> None:
     """Validate the structure of a profile overlay-contract ``payload``."""
     if payload.get("schema_version") != 1:
@@ -159,12 +169,7 @@ def validate_profile_overlay_contract(payload: Mapping[str, Any]) -> None:
     if not isinstance(replacements, list):
         raise ValueError("profile overlay replacements must be a list")
     for index, entry in enumerate(replacements):
-        if not isinstance(entry, Mapping):
-            raise ValueError(f"profile overlay replacement {index} must be an object")
-        for key in ("path", "search", "replace"):
-            require_non_empty_string(
-                entry.get(key), f"profile overlay replacement {index}.{key}"
-            )
+        _validate_overlay_replacement(index, entry)
 
 
 def build_managed_profile(

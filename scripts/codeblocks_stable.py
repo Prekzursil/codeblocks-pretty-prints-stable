@@ -93,13 +93,28 @@ def _cmd_validate_manifest(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_notice_manifest(path: str | None) -> dict | None:
+    """Load and version-check an optional notice manifest document."""
+    if not path:
+        return None
+    notice_manifest = load_json_document(path)
+    if notice_manifest.get("schema_version") != 1:
+        raise SystemExit("notice manifest schema_version must be 1")
+    return notice_manifest
+
+
+def _write_inventory_payload(output: str, payload: list[dict]) -> None:
+    """Serialize ``payload`` as JSON to ``output`` (``-`` selects stdout)."""
+    if output == "-":
+        json.dump(payload, sys.stdout, indent=2)
+        sys.stdout.write("\n")
+    else:
+        Path(output).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def _cmd_inventory_notices(args: argparse.Namespace) -> int:
     """Write the notice inventory for ``args.root`` to the chosen output."""
-    notice_manifest = (
-        load_json_document(args.notice_manifest) if args.notice_manifest else None
-    )
-    if notice_manifest is not None and notice_manifest.get("schema_version") != 1:
-        raise SystemExit("notice manifest schema_version must be 1")
+    notice_manifest = _load_notice_manifest(args.notice_manifest)
     payload = [
         {
             "path": entry.path,
@@ -107,11 +122,7 @@ def _cmd_inventory_notices(args: argparse.Namespace) -> int:
         }
         for entry in collect_notice_inventory(args.root, notice_manifest)
     ]
-    if args.output == "-":
-        json.dump(payload, sys.stdout, indent=2)
-        sys.stdout.write("\n")
-    else:
-        Path(args.output).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    _write_inventory_payload(args.output, payload)
     return 0
 
 

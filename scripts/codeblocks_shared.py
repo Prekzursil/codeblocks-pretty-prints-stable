@@ -58,11 +58,14 @@ def expand_manifest_path(value: str | Path) -> Path:
     return Path(os.path.expandvars(as_windows_string(value)))
 
 
+def _is_non_blank_string(item: Any) -> bool:
+    """Return ``True`` when ``item`` is a string with non-whitespace content."""
+    return isinstance(item, str) and bool(item.strip())
+
+
 def ensure_str_list(value: Any, label: str) -> list[str]:
     """Validate ``value`` is a non-empty list of non-blank strings."""
-    if not isinstance(value, list) or not all(
-        isinstance(item, str) and item.strip() for item in value
-    ):
+    if not isinstance(value, list) or not all(_is_non_blank_string(item) for item in value):
         raise ValueError(f"{label} must be a non-empty list of strings")
     return [item.strip() for item in value]
 
