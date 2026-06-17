@@ -27,7 +27,9 @@ DEFAULT_PROFILE_OVERLAY_REPLACEMENTS = (
 def resolve_manifest_roots(manifest: Mapping[str, Any]) -> dict[str, Path]:
     rewrites = manifest["profile_rewrites"]
     return {
-        "current_install_root": expand_manifest_path(manifest["current_official_install_root"]),
+        "current_install_root": expand_manifest_path(
+            manifest["current_official_install_root"]
+        ),
         "edition_install_root": expand_manifest_path(manifest["edition_install_root"]),
         "current_profile_root": expand_manifest_path(manifest["current_profile_root"]),
         "managed_profile_root": expand_manifest_path(manifest["managed_profile_root"]),
@@ -42,21 +44,29 @@ def case_insensitive_replace(text: str, old: str, new: str) -> str:
     return pattern.sub(lambda _match: new, text)
 
 
-def rewrite_windows_paths(text: str, replacements: Sequence[tuple[str | Path, str | Path]]) -> str:
+def rewrite_windows_paths(
+    text: str, replacements: Sequence[tuple[str | Path, str | Path]]
+) -> str:
     rewritten = text
     token_map: list[tuple[str, str]] = []
-    ordered_replacements = sorted(replacements, key=lambda pair: len(as_windows_string(pair[0])), reverse=True)
+    ordered_replacements = sorted(
+        replacements, key=lambda pair: len(as_windows_string(pair[0])), reverse=True
+    )
     for index, (old, new) in enumerate(ordered_replacements):
         token = f"__CBSTABLE_TOKEN_{index}__"
         token_map.append((token, as_windows_string(new)))
-        rewritten = re.sub(re.escape(as_windows_string(old)), token, rewritten, flags=re.IGNORECASE)
+        rewritten = re.sub(
+            re.escape(as_windows_string(old)), token, rewritten, flags=re.IGNORECASE
+        )
     for token, replacement in token_map:
         rewritten = rewritten.replace(token, replacement)
     return rewritten
 
 
 def toolchain_python_relative_path(manifest: Mapping[str, Any]) -> Path:
-    value = require_non_empty_string(manifest["toolchain_python_relative_root"], "toolchain_python_relative_root")
+    value = require_non_empty_string(
+        manifest["toolchain_python_relative_root"], "toolchain_python_relative_root"
+    )
     return Path(as_windows_string(value))
 
 
@@ -66,14 +76,29 @@ def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
     toolchain_share_python = roots["toolchain_root"] / python_relative_path
     debugger_executable_name = roots["debugger_executable"].name
     replacements = [
-        (roots["current_install_root"] / "MinGW" / python_relative_path, toolchain_share_python),
-        (roots["current_install_root"] / "MINGW" / python_relative_path, toolchain_share_python),
-        (roots["current_install_root"] / "MinGW" / "bin" / debugger_executable_name, roots["debugger_executable"]),
-        (roots["current_install_root"] / "MINGW" / "bin" / debugger_executable_name, roots["debugger_executable"]),
+        (
+            roots["current_install_root"] / "MinGW" / python_relative_path,
+            toolchain_share_python,
+        ),
+        (
+            roots["current_install_root"] / "MINGW" / python_relative_path,
+            toolchain_share_python,
+        ),
+        (
+            roots["current_install_root"] / "MinGW" / "bin" / debugger_executable_name,
+            roots["debugger_executable"],
+        ),
+        (
+            roots["current_install_root"] / "MINGW" / "bin" / debugger_executable_name,
+            roots["debugger_executable"],
+        ),
         (roots["current_install_root"] / "MinGW", roots["toolchain_root"]),
         (roots["current_install_root"] / "MINGW", roots["toolchain_root"]),
         (GENERIC_MINGW_ROOT / python_relative_path, toolchain_share_python),
-        (GENERIC_MINGW_ROOT / "bin" / debugger_executable_name, roots["debugger_executable"]),
+        (
+            GENERIC_MINGW_ROOT / "bin" / debugger_executable_name,
+            roots["debugger_executable"],
+        ),
         (GENERIC_MINGW_ROOT, roots["toolchain_root"]),
         (roots["current_install_root"], roots["edition_install_root"]),
         (roots["current_profile_root"], roots["managed_profile_root"]),
@@ -84,14 +109,21 @@ def normalize_codeblocks_profile(text: str, manifest: Mapping[str, Any]) -> str:
 def normalize_codesnippets_ini(text: str, manifest: Mapping[str, Any]) -> str:
     roots = resolve_manifest_roots(manifest)
     replacements = [
-        (roots["current_profile_root"] / "codesnippets.xml", roots["managed_profile_root"] / "codesnippets.xml"),
+        (
+            roots["current_profile_root"] / "codesnippets.xml",
+            roots["managed_profile_root"] / "codesnippets.xml",
+        ),
         (roots["current_profile_root"], roots["managed_profile_root"]),
     ]
     return rewrite_windows_paths(text, replacements)
 
 
-def normalize_profile_bundle(files: Mapping[str, str], manifest: Mapping[str, Any]) -> dict[str, str]:
-    missing = set(ensure_str_list(manifest["profile_sources"], "profile_sources")) - set(files)
+def normalize_profile_bundle(
+    files: Mapping[str, str], manifest: Mapping[str, Any]
+) -> dict[str, str]:
+    missing = set(
+        ensure_str_list(manifest["profile_sources"], "profile_sources")
+    ) - set(files)
     if missing:
         raise ValueError(f"profile bundle missing files: {', '.join(sorted(missing))}")
 
@@ -123,10 +155,14 @@ def validate_profile_overlay_contract(payload: Mapping[str, Any]) -> None:
         if not isinstance(entry, Mapping):
             raise ValueError(f"profile overlay replacement {index} must be an object")
         for key in ("path", "search", "replace"):
-            require_non_empty_string(entry.get(key), f"profile overlay replacement {index}.{key}")
+            require_non_empty_string(
+                entry.get(key), f"profile overlay replacement {index}.{key}"
+            )
 
 
-def build_managed_profile(source_profile_dir: str | Path, manifest: Mapping[str, Any]) -> dict[str, str]:
+def build_managed_profile(
+    source_profile_dir: str | Path, manifest: Mapping[str, Any]
+) -> dict[str, str]:
     profile_root = Path(source_profile_dir)
     files = {
         name: (profile_root / name).read_text(encoding="utf-8")

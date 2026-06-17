@@ -16,8 +16,12 @@ class ValidateReleaseInputsModuleTests(unittest.TestCase):
             rc = validate_module.main([str(repo_root), "--output", str(output_path)])
             self.assertEqual(rc, 0)
             payload = json.loads(output_path.read_text(encoding="utf-8"))
-            self.assertEqual(payload["manifest_name"], "codeblocks-pretty-prints-stable")
-            self.assertEqual(payload["overlay_seed_name"], "codeblocks_stable_profile_seed")
+            self.assertEqual(
+                payload["manifest_name"], "codeblocks-pretty-prints-stable"
+            )
+            self.assertEqual(
+                payload["overlay_seed_name"], "codeblocks_stable_profile_seed"
+            )
             self.assertGreater(payload["notice_count"], 0)
 
     def test_main_without_output_path_still_succeeds(self) -> None:
@@ -28,4 +32,3 @@ class ValidateReleaseInputsModuleTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

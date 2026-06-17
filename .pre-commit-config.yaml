@@ -1,0 +1,66 @@
+# Lean quality gates — local auto-fixers + fast checks.
+# `pre-commit run --all-files` is the gate-1/gate-3/gate-5 entrypoint used by CI
+# (.github/workflows/quality.yml -> reusable-quality.yml).
+# Every rev is pinned; bump versions here together with .quality/charter.yml
+# and the lean template.
+minimum_pre_commit_version: "3.5.0"
+
+default_language_version:
+  python: python3
+
+exclude: |-
+  (?x)^(
+    node_modules/|
+    dist/|
+    build/|
+    overlay/profile-seed/|
+    .*\.egg-info/
+  )
+
+repos:
+  # --- Gate 1: Python lint + format (ruff) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
+    hooks:
+      - id: ruff
+        name: ruff (lint --fix)
+        args: ["--fix"]
+        files: '^(scripts|tests)/.*\.py$'
+      - id: ruff-format
+        name: ruff (format)
+        files: '^(scripts|tests)/.*\.py$'
+
+  # --- Gate 1: JS lint (oxlint) over the provider-UI + config .cjs files ---
+  - repo: https://github.com/oxc-project/mirrors-oxlint
+    rev: v1.69.0
+    hooks:
+      - id: oxlint
+        name: oxlint (cjs)
+        args: ["--fix", "--deny-warnings"]
+        files: '\.(c?js|mjs)$'
+
+  # --- Gate 5: secrets (gitleaks) ---
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secrets)
+        args: ["--config", ".gitleaks.toml"]
+
+  # --- Gate 3: tests + STRICT 100% line+branch coverage (unittest + coverage.py) ---
+  # The lean template's Python coverage lane only fires when pyproject/setup.cfg/
+  # tox.ini is present; this repo configures coverage via .coveragerc, so the gate
+  # is enforced here as a single self-contained local hook (runs in
+  # `pre-commit run --all-files`). additional_dependencies mirrors
+  # requirements-dev.txt so the isolated hook env can import the runtime deps.
+  - repo: local
+    hooks:
+      - id: coverage-100
+        name: tests + coverage (100% line+branch)
+        entry: python .quality/run_coverage_gate.py
+        language: python
+        additional_dependencies: ["coverage==7.8.0", "defusedxml==0.7.1"]
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [pre-commit, manual]

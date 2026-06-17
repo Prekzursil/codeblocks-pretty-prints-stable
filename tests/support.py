@@ -14,7 +14,9 @@ GDB_PY_PATTERN = "*.gdb.py"
 CODEBLOCKS_INSTALL_ROOT = r"C:\Program Files\CodeBlocks"
 STABLE_INSTALL_ROOT = r"C:\Program Files\CodeBlocks Stable Toolchain Edition"
 APPDATA_PROFILE_ROOT = r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks"
-MANAGED_PROFILE_ROOT = r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition"
+MANAGED_PROFILE_ROOT = (
+    r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition"
+)
 TOOLCHAIN_ROOT = STABLE_INSTALL_ROOT + r"\MinGW"
 TOOLCHAIN_PYTHON_ROOT = TOOLCHAIN_ROOT + r"\share\gcc-14.2.0\python"
 
@@ -62,7 +64,9 @@ def write_profile_bundle(root: Path, default_conf: str, codesnippets_ini: str) -
     (root / CODESNIPPETS_INI).write_text(codesnippets_ini, encoding="utf-8")
 
 
-def write_release_input_skeleton(repo: Path, *, manifest: dict[str, Any] | None = None) -> dict[str, Any]:
+def write_release_input_skeleton(
+    repo: Path, *, manifest: dict[str, Any] | None = None
+) -> dict[str, Any]:
     payload_manifest = manifest or base_manifest()
     (repo / "manifests").mkdir(parents=True, exist_ok=True)
     (repo / "overlay").mkdir(parents=True, exist_ok=True)

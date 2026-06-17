@@ -1,0 +1,16 @@
+# osv-scanner configuration for the lean dependency gate (pinned tool: osv-scanner 2.3.8).
+# The gate runs osv-scanner over the lockfiles and must report 0 actionable CVEs.
+#
+# POLICY: ignore entries are allowed ONLY for a genuinely-unfixable vuln (no
+# non-breaking upgrade) OR one that is provably not reachable in THIS product,
+# each with a reason + dated review note (greppable). We do NOT use a baseline
+# file — clean-zero is reached by upgrading where a safe fix exists, and only by
+# a reasoned per-CVE ignore where it does not.
+#
+# Lockfiles scanned (recursive, repo root):
+#   - package-lock.json        (Playwright dev dependency tree)
+#   - requirements-dev.txt     (coverage + defusedxml dev deps)
+#
+# 2026-06-17 — onboarding to the lean gate. No IgnoredVulns are carried; add a
+# dated, reasoned entry below only for a future vuln that is genuinely unfixable
+# or provably unreachable in this tooling repo.

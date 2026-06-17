@@ -13,7 +13,9 @@ from scripts.codeblocks_notices import collect_notice_inventory
 from scripts.codeblocks_shared import load_json_document
 from scripts.codeblocks_validation import load_manifest
 
-DEV_ONLY_GDB_SOURCE = r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-views-1.0.3.gdb"
+DEV_ONLY_GDB_SOURCE = (
+    r"source C:\Devel\CodeBlocks\share\codeblocks/scripts/stl-views-1.0.3.gdb"
+)
 PATCHED_GDB_COMMENT = "# dev-only stl-views source removed; managed pretty-printers are configured in the seeded profile"
 PATCHED_GDB_PATH = Path("share") / "CodeBlocks" / "scripts" / "gdb_init.gdb"
 LOCAL_PAYLOAD_KIND = "local-known-good-install"
@@ -191,7 +193,9 @@ def materialize_notice_bundle(
     payload_root: Path,
     release_assets_root: Path,
 ) -> list[str]:
-    notice_manifest = load_json_document(repo_root / "manifests" / "notice_inventory.json")
+    notice_manifest = load_json_document(
+        repo_root / "manifests" / "notice_inventory.json"
+    )
     entries = collect_notice_inventory(payload_root, notice_manifest)
     harvested_root = release_assets_root / "notices"
     harvested_paths: list[str] = []
@@ -237,7 +241,9 @@ def prepare_local_release(
     if not (source_root / "codeblocks.exe").is_file():
         raise ValueError(f"Code::Blocks executable not found under {source_root}")
 
-    payload_manifest = load_manifest(repo / "manifests" / "codeblocks_stable_toolchain.json")
+    payload_manifest = load_manifest(
+        repo / "manifests" / "codeblocks_stable_toolchain.json"
+    )
     output = Path(output_root)
     payload_root = output / "payload" / "CodeBlocks"
     release_assets_root = output / "release-assets"
@@ -257,10 +263,16 @@ def prepare_local_release(
     )
     release_notes = render_release_notes(version, payload_manifest)
     release_notes_name = f"RELEASE_NOTES_{version}.md"
-    (release_assets_root / release_notes_name).write_text(release_notes, encoding="utf-8")
+    (release_assets_root / release_notes_name).write_text(
+        release_notes, encoding="utf-8"
+    )
 
-    notice_text = compose_notice_policy(repo_root=repo, harvested_paths=harvested_paths, version=version)
-    (release_assets_root / THIRD_PARTY_NOTICES_NAME).write_text(notice_text, encoding="utf-8")
+    notice_text = compose_notice_policy(
+        repo_root=repo, harvested_paths=harvested_paths, version=version
+    )
+    (release_assets_root / THIRD_PARTY_NOTICES_NAME).write_text(
+        notice_text, encoding="utf-8"
+    )
 
     release_manifest = build_release_manifest(
         version=version,
@@ -273,8 +285,14 @@ def prepare_local_release(
         encoding="utf-8",
     )
 
-    sbom = build_sbom(version=version, payload_manifest=payload_manifest, source_payload_sha256=source_sha)
-    (release_assets_root / SBOM_NAME).write_text(json.dumps(sbom, indent=2) + "\n", encoding="utf-8")
+    sbom = build_sbom(
+        version=version,
+        payload_manifest=payload_manifest,
+        source_payload_sha256=source_sha,
+    )
+    (release_assets_root / SBOM_NAME).write_text(
+        json.dumps(sbom, indent=2) + "\n", encoding="utf-8"
+    )
 
     provenance = build_provenance(
         version=version,
@@ -313,7 +331,9 @@ def _cmd_prepare_local_release(args: argparse.Namespace) -> int:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Release-preparation helpers for Code::Blocks Stable Toolchain Edition.")
+    parser = argparse.ArgumentParser(
+        description="Release-preparation helpers for Code::Blocks Stable Toolchain Edition."
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     prepare = subparsers.add_parser(
