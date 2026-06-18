@@ -19,4 +19,4 @@ jobs:
     # existing quality-zero-platform fleet workflows; no SaaS gate is removed here.
     # Pinned to the template branch so this PR's CI is real now; the runbook
     # re-pins to a tag once the template lands on the platform default branch.
-    uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-quality.yml@feat/lean-quality-template
+    uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-quality.yml@v1
