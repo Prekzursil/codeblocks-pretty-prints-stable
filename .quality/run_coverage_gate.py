@@ -6,6 +6,7 @@ Invoked by the `coverage-100` pre-commit hook (lean 6-gate charter). Lives under
 scope and does not itself need coverage. Mirrors scripts/verify's coverage steps
 but stops at the 100% report (the verify script does the full release pipeline).
 """
+
 import subprocess
 import sys
 from pathlib import Path
@@ -20,7 +21,9 @@ def _run(args: list[str]) -> int:
 
 def main() -> int:
     (REPO_ROOT / ".coverage").unlink(missing_ok=True)
-    rc = _run(["run", RCFILE, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"])
+    rc = _run(
+        ["run", RCFILE, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py"]
+    )
     if rc != 0:
         return rc
     return _run(["report", RCFILE, "--fail-under=100", "--show-missing"])
