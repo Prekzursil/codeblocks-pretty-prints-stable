@@ -12,7 +12,9 @@ from scripts.codeblocks_stable import validate_release_inputs
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Validate the release inputs for the curated Code::Blocks package.")
+    parser = argparse.ArgumentParser(
+        description="Validate the release inputs for the curated Code::Blocks package."
+    )
     parser.add_argument("repo_root", type=Path, nargs="?", default=Path.cwd())
     parser.add_argument("--output", type=Path, default=None)
     return parser
@@ -34,4 +36,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

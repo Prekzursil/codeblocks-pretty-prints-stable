@@ -10,7 +10,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from tests.support import base_manifest, write_materialized_profile_seed, write_release_input_skeleton
+from tests.support import (
+    base_manifest,
+    write_materialized_profile_seed,
+    write_release_input_skeleton,
+)
 
 
 class ScriptEntrypointTests(unittest.TestCase):
@@ -19,8 +23,15 @@ class ScriptEntrypointTests(unittest.TestCase):
             manifest_path = Path(tempdir) / "manifest.json"
             manifest_path.write_text(json.dumps(base_manifest()), encoding="utf-8")
             stdout = io.StringIO()
-            with patch.object(sys, "argv", ["codeblocks_stable.py", "validate-manifest", str(manifest_path)]):
-                with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as exc:
+            with patch.object(
+                sys,
+                "argv",
+                ["codeblocks_stable.py", "validate-manifest", str(manifest_path)],
+            ):
+                with (
+                    contextlib.redirect_stdout(stdout),
+                    self.assertRaises(SystemExit) as exc,
+                ):
                     runpy.run_module("scripts.codeblocks_stable", run_name="__main__")
             self.assertEqual(exc.exception.code, 0)
             self.assertIn("validated manifest", stdout.getvalue())
@@ -45,14 +56,41 @@ class ScriptEntrypointTests(unittest.TestCase):
             (repo / "THIRD_PARTY_NOTICES.md").write_text("policy", encoding="utf-8")
 
             source_install_root = root / "CodeBlocks"
-            (source_install_root / "share" / "CodeBlocks" / "scripts").mkdir(parents=True, exist_ok=True)
-            (source_install_root / "share" / "CodeBlocks" / "scripts" / "gdb_init.gdb").write_text(
+            (source_install_root / "share" / "CodeBlocks" / "scripts").mkdir(
+                parents=True, exist_ok=True
+            )
+            (
+                source_install_root
+                / "share"
+                / "CodeBlocks"
+                / "scripts"
+                / "gdb_init.gdb"
+            ).write_text(
                 "set print pretty on\n",
                 encoding="utf-8",
             )
-            (source_install_root / "codeblocks.exe").write_text("binary", encoding="utf-8")
-            (source_install_root / "MinGW" / "share" / "gcc-14.2.0" / "python" / "libstdcxx" / "v6").mkdir(parents=True)
-            (source_install_root / "MinGW" / "share" / "gcc-14.2.0" / "python" / "libstdcxx" / "v6" / "printers.py").write_text(
+            (source_install_root / "codeblocks.exe").write_text(
+                "binary", encoding="utf-8"
+            )
+            (
+                source_install_root
+                / "MinGW"
+                / "share"
+                / "gcc-14.2.0"
+                / "python"
+                / "libstdcxx"
+                / "v6"
+            ).mkdir(parents=True)
+            (
+                source_install_root
+                / "MinGW"
+                / "share"
+                / "gcc-14.2.0"
+                / "python"
+                / "libstdcxx"
+                / "v6"
+                / "printers.py"
+            ).write_text(
                 "printers",
                 encoding="utf-8",
             )
@@ -74,10 +112,13 @@ class ScriptEntrypointTests(unittest.TestCase):
                     str(repo / "dist"),
                 ],
             ):
-                with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as exc:
+                with (
+                    contextlib.redirect_stdout(stdout),
+                    self.assertRaises(SystemExit) as exc,
+                ):
                     runpy.run_module("scripts.codeblocks_release", run_name="__main__")
             self.assertEqual(exc.exception.code, 0)
-            self.assertIn("\"release_assets_root\"", stdout.getvalue())
+            self.assertIn('"release_assets_root"', stdout.getvalue())
 
     def test_normalize_coverage_xml_main_entrypoint(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -88,9 +129,13 @@ class ScriptEntrypointTests(unittest.TestCase):
                 "</classes></package></packages></coverage>",
                 encoding="utf-8",
             )
-            with patch.object(sys, "argv", ["normalize_coverage_xml.py", str(coverage_xml)]):
+            with patch.object(
+                sys, "argv", ["normalize_coverage_xml.py", str(coverage_xml)]
+            ):
                 with self.assertRaises(SystemExit) as exc:
-                    runpy.run_module("scripts.quality.normalize_coverage_xml", run_name="__main__")
+                    runpy.run_module(
+                        "scripts.quality.normalize_coverage_xml", run_name="__main__"
+                    )
             self.assertEqual(exc.exception.code, 0)
 
     def test_validate_release_inputs_main_entrypoint(self) -> None:
@@ -111,8 +156,13 @@ class ScriptEntrypointTests(unittest.TestCase):
             )
             stdout = io.StringIO()
             with patch.object(sys, "argv", ["validate_release_inputs.py", str(repo)]):
-                with contextlib.redirect_stdout(stdout), self.assertRaises(SystemExit) as exc:
-                    runpy.run_module("scripts.quality.validate_release_inputs", run_name="__main__")
+                with (
+                    contextlib.redirect_stdout(stdout),
+                    self.assertRaises(SystemExit) as exc,
+                ):
+                    runpy.run_module(
+                        "scripts.quality.validate_release_inputs", run_name="__main__"
+                    )
             self.assertEqual(exc.exception.code, 0)
             self.assertEqual(stdout.getvalue(), "")
 

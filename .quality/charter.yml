@@ -1,0 +1,30 @@
+# Lean 6-gate quality charter (decided 2026-06-16).
+# This is the CLOSED set of gates for this repo. The charter-check (see
+# charter_check.sh, invoked by the lean template when this file is present)
+# fails if the set of active gate configs drifts from this declaration.
+#
+# Prevent (auto-fix) | Binary green/red | Ratchet retired: 100% everywhere.
+version: 1
+gates:
+  - id: 1-lint-format-imports-seclint
+    autofix: true
+    tools: [ruff]            # Python; JS .cjs linted via oxlint in pre-commit
+    config: .pre-commit-config.yaml
+  - id: 2-types
+    tools: [basedpyright]    # Python; no TS in this repo
+    config: lean-template
+  - id: 3-tests-coverage
+    policy: "100% line+branch (standing user policy; ratchet retired)"
+    config: .coveragerc       # enforced via the coverage-100 pre-commit hook
+  - id: 4-sast
+    tools: [opengrep]
+    config: .quality/opengrep
+  - id: 5-secrets
+    tools: [gitleaks]
+    config: .gitleaks.toml
+  - id: 6-deps
+    tools: [osv-scanner, dependabot]
+    config: [osv-scanner.toml, .github/dependabot.yml]
+# Deleted as gates (NOT used here): Sonar, Codacy, DeepSource, DeepScan, qlty,
+# Codecov-as-gate, Snyk, Sentry-as-gate, Pylint, standalone Bandit, ESLint-classic,
+# Biome, Trivy-for-app-deps. CodeQL only nightly on public repos.

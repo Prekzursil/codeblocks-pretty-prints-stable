@@ -13,10 +13,16 @@ from scripts.codeblocks_stable import load_manifest, validate_payload_manifest
 
 class ManifestTests(unittest.TestCase):
     def test_manifest_loads_and_validates(self) -> None:
-        manifest = load_manifest(Path(__file__).resolve().parents[1] / "manifests" / "codeblocks_stable_toolchain.json")
+        manifest = load_manifest(
+            Path(__file__).resolve().parents[1]
+            / "manifests"
+            / "codeblocks_stable_toolchain.json"
+        )
         self.assertEqual(manifest["schema_version"], 1)
         self.assertEqual(manifest["repo_name"], "codeblocks-pretty-prints-stable")
-        self.assertEqual(manifest["edition_name"], "Code::Blocks Stable Toolchain Edition")
+        self.assertEqual(
+            manifest["edition_name"], "Code::Blocks Stable Toolchain Edition"
+        )
         self.assertIn("x86", manifest["target_architectures"])
         self.assertIn("x64", manifest["target_architectures"])
         self.assertIn("default.conf", manifest["profile_sources"])
@@ -33,4 +39,3 @@ class ManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

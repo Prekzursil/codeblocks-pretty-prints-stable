@@ -1,0 +1,22 @@
+# gitleaks configuration for the lean secrets gate (pinned tool: gitleaks 8.30.1).
+# The gate runs via pre-commit over the working tree and must report 0.
+# Extends the upstream default ruleset; we only add path allowlists for
+# generated / build output and the seeded overlay profile (no real secrets).
+title = "codeblocks-pretty-prints-stable lean secrets gate"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build output, generated trees, and the seeded overlay profile (not real secrets)."
+
+# Never scan generated / build / vendored trees. These are not our source and
+# produce only example/false-positive matches.
+paths = [
+  '''(^|/)\.git/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  '''(^|/)overlay/profile-seed/''',
+  '''.*\.egg-info/''',
+]

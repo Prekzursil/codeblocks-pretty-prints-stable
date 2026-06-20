@@ -1,0 +1,7 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/pyright/main/packages/vscode-pyright/schemas/pyrightconfig.schema.json",
+  "include": ["scripts", "tests"],
+  "exclude": ["**/__pycache__", "build", "dist", "overlay", "packaging"],
+  "typeCheckingMode": "standard",
+  "pythonVersion": "3.12"
+}

@@ -22,7 +22,11 @@ from scripts.codeblocks_stable import (
     validate_payload_manifest,
     validate_release_inputs,
 )
-from tests.support import base_manifest, write_materialized_profile_seed, write_release_input_skeleton
+from tests.support import (
+    base_manifest,
+    write_materialized_profile_seed,
+    write_release_input_skeleton,
+)
 
 
 class CodeblocksStableEdgeTests(unittest.TestCase):
@@ -35,7 +39,11 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
 
     def test_case_insensitive_replace_replaces_case_insensitively(self) -> None:
         self.assertEqual(
-            _case_insensitive_replace(r"C:\Program Files\CodeBlocks", r"c:\program files\codeblocks", r"C:\Stable"),
+            _case_insensitive_replace(
+                r"C:\Program Files\CodeBlocks",
+                r"c:\program files\codeblocks",
+                r"C:\Stable",
+            ),
             r"C:\Stable",
         )
 
@@ -93,7 +101,9 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
     def test_build_managed_profile_reads_source_files(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
-            (root / "default.conf").write_text(r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8")
+            (root / "default.conf").write_text(
+                r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8"
+            )
             (root / "default.cbKeyBinder20.conf").write_text("{}", encoding="utf-8")
             (root / "codesnippets.ini").write_text(
                 r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
@@ -101,16 +111,22 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             )
             bundle = build_managed_profile(root, base_manifest())
             self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["default.conf"])
-            self.assertIn("CodeBlocks Stable Toolchain Edition", bundle["codesnippets.ini"])
+            self.assertIn(
+                "CodeBlocks Stable Toolchain Edition", bundle["codesnippets.ini"]
+            )
 
-    def test_notice_category_detection_prefers_custom_categories_then_defaults(self) -> None:
+    def test_notice_category_detection_prefers_custom_categories_then_defaults(
+        self,
+    ) -> None:
         categories = {"docs": ["README*"], "runtime": ["*gdb.py"]}
         self.assertEqual(
             _notice_category_from_name("README-notes.txt", categories, ["LICENSE*"]),
             "docs",
         )
         self.assertEqual(
-            _notice_category_from_name("libstdc++.dll.a-gdb.py", categories, ["*.gdb.py"]),
+            _notice_category_from_name(
+                "libstdc++.dll.a-gdb.py", categories, ["*.gdb.py"]
+            ),
             "runtime",
         )
         self.assertEqual(
@@ -123,7 +139,9 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
         )
         self.assertIsNone(_notice_category_from_name("notes.txt", {}, ["LICENSE*"]))
 
-    def test_collect_notice_inventory_handles_empty_and_invalid_category_manifest(self) -> None:
+    def test_collect_notice_inventory_handles_empty_and_invalid_category_manifest(
+        self,
+    ) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             root = Path(tempdir)
             self.assertEqual(collect_notice_inventory(root), [])
@@ -137,7 +155,9 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
 
     def test_render_notice_inventory_handles_empty_and_populated_inputs(self) -> None:
         self.assertIn("- None found", _render_notice_inventory([]))
-        rendered = _render_notice_inventory([NoticeEntry(path="LICENSE.txt", category="license")])
+        rendered = _render_notice_inventory(
+            [NoticeEntry(path="LICENSE.txt", category="license")]
+        )
         self.assertIn("LICENSE.txt", rendered)
         self.assertIn("license", rendered)
 
@@ -156,7 +176,13 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "seed_name": "seed",
+                        "debugger_init_commands": ["x"],
+                    }
+                ),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "notice_inventory schema_version"):
@@ -178,21 +204,41 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             )
             write_materialized_profile_seed(repo)
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 2, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps(
+                    {
+                        "schema_version": 2,
+                        "seed_name": "seed",
+                        "debugger_init_commands": ["x"],
+                    }
+                ),
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "overlay profile_seed schema_version"):
+            with self.assertRaisesRegex(
+                ValueError, "overlay profile_seed schema_version"
+            ):
                 validate_release_inputs(repo)
 
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": []}),
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "seed_name": "seed",
+                        "debugger_init_commands": [],
+                    }
+                ),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "debugger_init_commands"):
                 validate_release_inputs(repo)
 
             (repo / "overlay" / "profile_seed.json").write_text(
-                json.dumps({"schema_version": 1, "seed_name": "seed", "debugger_init_commands": ["x"]}),
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "seed_name": "seed",
+                        "debugger_init_commands": ["x"],
+                    }
+                ),
                 encoding="utf-8",
             )
             with self.assertRaisesRegex(ValueError, "notice inventory is empty"):
@@ -203,7 +249,9 @@ class CodeblocksStableEdgeTests(unittest.TestCase):
             repo = Path(tempdir)
             profile = repo / "profile"
             profile.mkdir(parents=True)
-            (profile / "default.conf").write_text(r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8")
+            (profile / "default.conf").write_text(
+                r"C:\Program Files\CodeBlocks\MinGW", encoding="utf-8"
+            )
             (profile / "default.cbKeyBinder20.conf").write_text("{}", encoding="utf-8")
             (profile / "codesnippets.ini").write_text(
                 r"SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",

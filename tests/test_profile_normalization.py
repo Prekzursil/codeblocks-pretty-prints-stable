@@ -53,7 +53,9 @@ end]]></str>
         )
         self.assertNotIn(r"C:\Program Files\CodeBlocks\MinGW", normalized)
 
-    def test_default_conf_rewrites_generic_mingw_root_and_custom_python_relative_path(self) -> None:
+    def test_default_conf_rewrites_generic_mingw_root_and_custom_python_relative_path(
+        self,
+    ) -> None:
         self.manifest["toolchain_python_relative_root"] = r"share\gcc-custom\python"
         self.manifest["profile_rewrites"]["debugger_python_root"] = (
             r"C:\Program Files\CodeBlocks Stable Toolchain Edition\MinGW\share\gcc-custom\python"
@@ -93,9 +95,7 @@ SnippetFile=C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml
 SnippetFolder=
 """
         normalized = normalize_codesnippets_ini(text, self.manifest)
-        expected = (
-            r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition\codesnippets.xml"
-        )
+        expected = r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks Stable Toolchain Edition\codesnippets.xml"
         self.assertIn(expected, normalized)
         self.assertNotIn(
             r"C:\Users\Prekzursil\AppData\Roaming\CodeBlocks\codesnippets.xml",
