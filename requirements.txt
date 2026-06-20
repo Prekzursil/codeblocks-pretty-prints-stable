@@ -1,0 +1,5 @@
+# Runtime dependencies for the codeblocks-pretty-prints-stable helper scripts.
+# defusedxml backs scripts/quality/normalize_coverage_xml.py (safe XML parsing).
+# Kept here (not only in requirements-dev.txt) so the CI coverage gate installs
+# it as a runtime dep before running the test suite.
+defusedxml==0.7.1
