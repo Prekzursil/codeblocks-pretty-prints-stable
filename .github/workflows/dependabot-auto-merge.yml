@@ -1,0 +1,25 @@
+name: dependabot-auto-merge
+
+# Tier 1 of the 3-tier merge automation.
+# Enables GitHub native auto-merge on Dependabot PRs. The PR only actually
+# merges once ALL required status checks (branch protection: "codeql / CodeQL",
+# "quality / quality") are green -- this job never bypasses checks.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge (squash, gated on required checks)
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
