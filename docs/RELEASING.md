@@ -55,7 +55,6 @@ That flow creates/pushes tag `v0.1.0` if needed and uploads the staged files to 
 - provider truth clean enough for:
   - Codacy
   - SonarCloud
-  - DeepScan
   - Semgrep
   - Sentry
 
