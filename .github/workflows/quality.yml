@@ -20,3 +20,6 @@ jobs:
     # Pinned to the template branch so this PR's CI is real now; the runbook
     # re-pins to a tag once the template lands on the platform default branch.
     uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-quality.yml@v1
+
+# CONTROL BRANCH: pin intentionally left at @v1. Paired with the @main probe PR to
+# separate a real regression from the live deps.dev resolver outage. DO NOT MERGE.
