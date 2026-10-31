@@ -40,7 +40,7 @@ jobs:
 
       - name: Draft a fix with GitHub Models (free inference)
         id: ai
-        uses: actions/ai-inference@v1
+        uses: actions/ai-inference@v3
         with:
           model: openai/gpt-4o-mini
           system-prompt: >-
