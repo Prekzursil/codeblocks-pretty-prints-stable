@@ -1,5 +1,20 @@
 name: CodeQL
 
+# Fleet CODEQL DECISION (advanced configuration): this repo runs its OWN
+# CodeQL workflow with BOTH query suites -- security-extended AND
+# security-and-quality (strictly subsumes the default suite and the
+# security-extended suite) -- as a per-language matrix. Each language lane
+# uploads its SARIF to code scanning under a per-language category.
+# Replaces the quality-zero-platform reusable wrapper call, which hard-coded
+# `queries: security-and-quality` (security-extended was missing).
+# Matrix scope (languages this repo actually has): python (scripts/ package)
+# and javascript-typescript (playwright.config.cjs, scripts/provider_ui/
+# verify_dashboards.cjs). PowerShell / Inno Setup / Shell are present but are
+# not CodeQL-supported languages.
+# The repo's own quality gate (quality.yml -> QZP lean gate, which runs the
+# 100% line+branch coverage lanes gate-tests-coverage python + jsts) stays
+# wired beside this and is unchanged.
+
 permissions:
   actions: read
   contents: read
@@ -7,9 +22,9 @@ permissions:
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   merge_group:
     types: [checks_requested]
   schedule:
@@ -17,15 +32,35 @@ on:
   workflow_dispatch:
 
 jobs:
-  codeql:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.runs-on }}
     permissions:
       actions: read
       contents: read
       security-events: write
-    uses: Prekzursil/quality-zero-platform/.github/workflows/reusable-codeql.yml@b4fbe38470fd2831f86f194df5b638a271bae8b8
-    with:
-      repo_slug: ${{ github.repository }}
-      event_name: ${{ github.event_name }}
-      sha: ${{ github.event.pull_request.head.sha || github.sha }}
-      platform_repository: Prekzursil/quality-zero-platform
-      platform_ref: main
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            runs-on: ubuntu-latest
+          - language: javascript-typescript
+            runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4
+        with:
+          category: /language:${{ matrix.language }}
