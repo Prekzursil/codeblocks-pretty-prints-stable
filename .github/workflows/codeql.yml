@@ -51,6 +51,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          # Analyze the PR HEAD (not the merge commit) so code-scanning results
+          # attach to the exact sha under review -- the repo's code_scanning
+          # ruleset ("CodeQL security red-blocker", any severity) evaluates
+          # the head sha, matching the previous QZP wrapper behavior.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
 
       - name: Initialize CodeQL
