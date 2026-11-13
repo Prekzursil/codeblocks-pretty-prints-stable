@@ -1,5 +1,20 @@
 name: CodeQL
 
+# Fleet CODEQL DECISION (advanced configuration): this repo runs its OWN
+# CodeQL workflow with BOTH query suites -- security-extended AND
+# security-and-quality (strictly subsumes the default suite and the
+# security-extended suite) -- as a per-language matrix. Each language lane
+# uploads its SARIF to code scanning under a per-language category.
+# Replaces the quality-zero-platform reusable wrapper call, which hard-coded
+# `queries: security-and-quality` (security-extended was missing).
+# Matrix scope (languages this repo actually has): python (scripts/ package)
+# and javascript-typescript (playwright.config.cjs, scripts/provider_ui/
+# verify_dashboards.cjs). PowerShell / Inno Setup / Shell are present but are
+# not CodeQL-supported languages.
+# The repo's own quality gate (quality.yml -> QZP lean gate, which runs the
+# 100% line+branch coverage lanes gate-tests-coverage python + jsts) stays
+# wired beside this and is unchanged.
+
 permissions:
   actions: read
   contents: read
@@ -7,9 +22,9 @@ permissions:
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   merge_group:
     types: [checks_requested]
   schedule:
@@ -17,6 +32,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Red-blocker feed: the repo's "CodeQL security red-blocker (any severity)"
+  # ruleset is only satisfied by analyses carrying this wrapper's linkage
+  # (proven by controlled comparison: PR #48 with this exact wrapper merged
+  # 2026-11-05, while PR #54's advanced-workflow analyses -- head-ref,
+  # merge-ref, custom categories, and action-derived categories -- were all
+  # rejected with "expecting 1 result from CodeQL"). It runs the
+  # security-and-quality suite; the `analyze` matrix below strictly subsumes
+  # it with security-extended + security-and-quality per the fleet CODEQL
+  # DECISION. Removing this job makes the repo unmergeable (including
+  # Dependabot security-fix auto-merges) until the ruleset is retargeted.
   codeql:
     permissions:
       actions: read
@@ -29,3 +54,46 @@ jobs:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
       platform_repository: Prekzursil/quality-zero-platform
       platform_ref: main
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.runs-on }}
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: python
+            runs-on: ubuntu-latest
+          - language: javascript-typescript
+            runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Analyze the PR HEAD (not the merge commit) so code-scanning results
+          # attach to the exact sha under review -- the repo's code_scanning
+          # ruleset ("CodeQL security red-blocker", any severity) evaluates
+          # the head sha, matching the previous QZP wrapper behavior.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended,security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4
+        # No explicit `category:` input. With a per-language matrix the action
+        # derives a per-language category from the workflow path + job name
+        # (".github/workflows/codeql.yml:Analyze (<language>)"), so each
+        # language's SARIF lands in its own category (fleet CODEQL DECISION)
+        # AND stays linked to the GitHub Advanced Security "CodeQL" required
+        # check this repo's rulesets evaluate -- an explicit custom category
+        # broke that linkage ("1 configuration not found", merge blocked).
