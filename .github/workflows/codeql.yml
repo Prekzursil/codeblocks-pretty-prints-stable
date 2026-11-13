@@ -67,5 +67,10 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@1fc58d04a4d4374f921bdac573c3811c240f9c26 # v4
-        with:
-          category: /language:${{ matrix.language }}
+        # No explicit `category:` input. With a per-language matrix the action
+        # derives a per-language category from the workflow path + job name
+        # (".github/workflows/codeql.yml:Analyze (<language>)"), so each
+        # language's SARIF lands in its own category (fleet CODEQL DECISION)
+        # AND stays linked to the GitHub Advanced Security "CodeQL" required
+        # check this repo's rulesets evaluate -- an explicit custom category
+        # broke that linkage ("1 configuration not found", merge blocked).
